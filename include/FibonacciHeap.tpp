@@ -114,7 +114,7 @@ void FibonacciHeap<T>::consolidate() {
         FibonacciNode<T>* x = w;
         int d = x->degree;
         
-        while (degreeTable[d] != nullptr) {
+        while (d < degreeTable.size() && degreeTable[d] != nullptr) {
             FibonacciNode<T>* y = degreeTable[d];
             
             if (x->key > y->key) {
@@ -124,6 +124,11 @@ void FibonacciHeap<T>::consolidate() {
             link(y, x);
             degreeTable[d] = nullptr;
             d++;
+            
+            // Expand degree table if needed
+            if (d >= degreeTable.size()) {
+                degreeTable.resize(d + 1, nullptr);
+            }
         }
         
         degreeTable[d] = x;

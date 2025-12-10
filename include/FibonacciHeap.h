@@ -38,8 +38,6 @@ private:
     void consolidate();
     void cut(FibonacciNode<T>* x, FibonacciNode<T>* y);
     void cascadingCut(FibonacciNode<T>* y);
-    void addToRootList(FibonacciNode<T>* node);
-    void removeFromRootList(FibonacciNode<T>* node);
     void destroyNode(FibonacciNode<T>* node);
     
 public:

@@ -7,9 +7,26 @@ MainWindow::MainWindow() :
     window(sf::VideoMode(1200, 800), "Fibonacci Heap Visualization"),
     isTyping(false) {
     
-    // Load font
-    if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
-        std::cerr << "Error loading font" << std::endl;
+    // Try to load font from multiple locations for cross-platform compatibility
+    std::vector<std::string> fontPaths = {
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",           // Linux
+        "/usr/share/fonts/TTF/DejaVuSans.ttf",                       // Linux alternative
+        "C:\\Windows\\Fonts\\Arial.ttf",                              // Windows
+        "/System/Library/Fonts/Helvetica.ttc",                       // macOS
+        "/Library/Fonts/Arial.ttf",                                  // macOS alternative
+        "DejaVuSans.ttf"                                             // Local bundled font
+    };
+    
+    bool fontLoaded = false;
+    for (const auto& path : fontPaths) {
+        if (font.loadFromFile(path)) {
+            fontLoaded = true;
+            break;
+        }
+    }
+    
+    if (!fontLoaded) {
+        std::cerr << "Warning: Could not load any font. Text may not display properly." << std::endl;
     }
     
     initializeUI();
@@ -186,7 +203,8 @@ void MainWindow::extractMinValue() {
     
     try {
         int minValue = heap.getMin();
-        heap.extractMin();
+        FibonacciNode<int>* extracted = heap.extractMin();
+        delete extracted;  // Free the extracted node
         updateStatus("Extracted min: " + std::to_string(minValue));
     }
     catch (const std::exception& e) {
