@@ -20,6 +20,8 @@ Makefile
 FibonacciHeapGUI
 demo_test
 advanced_example
+examples/basic_test
+examples/advanced_test
 
 # Test scripts
 test_gui.sh
