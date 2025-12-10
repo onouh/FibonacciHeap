@@ -18,6 +18,14 @@ Makefile
 *.out
 *.app
 FibonacciHeapGUI
+demo_test
+advanced_example
+
+# Test scripts
+test_gui.sh
+
+# CodeQL
+_codeql_*
 
 # IDE specific
 .vscode/
