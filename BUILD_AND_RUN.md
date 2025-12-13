@@ -7,24 +7,24 @@ This guide provides detailed instructions for building and running the Fibonacci
 ### Required Software
 - **C++ Compiler**: g++ 7.0 or newer (with C++17 support)
 - **CMake**: Version 3.16 or newer
-- **SFML**: Version 2.5 or newer
+- **Qt 6**: Widgets module
 
 ### Platform-Specific Setup
 
 #### Ubuntu/Debian
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential cmake libsfml-dev
+sudo apt-get install -y build-essential cmake qt6-base-dev
 ```
 
 #### Fedora/RHEL
 ```bash
-sudo dnf install gcc-c++ cmake SFML-devel
+sudo dnf install gcc-c++ cmake qt6-qtbase-devel
 ```
 
 #### Arch Linux
 ```bash
-sudo pacman -S base-devel cmake sfml
+sudo pacman -S base-devel cmake qt6-base
 ```
 
 #### macOS
@@ -33,14 +33,14 @@ sudo pacman -S base-devel cmake sfml
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install dependencies
-brew install cmake sfml
+brew install cmake qt@6
 ```
 
 #### Windows
 1. Install [CMake](https://cmake.org/download/)
 2. Install [MinGW-w64](https://www.mingw-w64.org/) or [Visual Studio](https://visualstudio.microsoft.com/)
-3. Download and install [SFML](https://www.sfml-dev.org/download.php)
-4. Set SFML_ROOT environment variable to your SFML installation path
+3. Download and install [Qt 6](https://www.qt.io/download)
+4. Set Qt6_DIR environment variable to your Qt installation path
 
 ## Building the Project
 
@@ -60,9 +60,9 @@ cd build
 cmake ..
 ```
 
-If SFML is not found automatically, specify the path:
+If Qt is not found automatically, specify the path:
 ```bash
-cmake .. -DSFML_ROOT=/path/to/sfml
+cmake .. -DQt6_DIR=/path/to/qt6/lib/cmake/Qt6
 ```
 
 ### Step 4: Build
@@ -120,22 +120,17 @@ g++ -std=c++17 -I../include advanced_example.cpp -o advanced_example
 
 ## Troubleshooting
 
-### Font Loading Issues
-If you see "Warning: Could not load any font", the application will still work but text may not display. To fix:
-
-1. **Linux**: Install DejaVu fonts
-   ```bash
-   sudo apt-get install fonts-dejavu
-   ```
-
-2. **macOS/Windows**: The default system fonts should work automatically
-
-### SFML Not Found
-If CMake cannot find SFML:
+### Qt Not Found
+If CMake cannot find Qt:
 ```bash
-# Set SFML directory
-export SFML_ROOT=/usr/local
-cmake .. -DSFML_ROOT=$SFML_ROOT
+# Set Qt directory
+export Qt6_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6
+cmake .. -DQt6_DIR=$Qt6_DIR
+```
+
+For custom Qt installations:
+```bash
+cmake .. -DCMAKE_PREFIX_PATH=/path/to/qt6
 ```
 
 ### Display Issues (Linux Headless)
@@ -156,9 +151,9 @@ export DISPLAY=:99
    g++ --version  # Should be 7.0 or higher
    ```
 
-2. **"SFML not found"**: Ensure SFML is properly installed
+2. **"Qt not found"**: Ensure Qt 6 is properly installed
    ```bash
-   pkg-config --modversion sfml-all  # Check SFML version
+   qmake6 --version  # Check Qt version
    ```
 
 ## Performance Notes
@@ -171,7 +166,8 @@ export DISPLAY=:99
 
 ## Additional Resources
 
-- [SFML Documentation](https://www.sfml-dev.org/documentation/)
+- [Qt 6 Documentation](https://doc.qt.io/qt-6/)
+- [Qt Widgets](https://doc.qt.io/qt-6/qtwidgets-index.html)
 - [Fibonacci Heap Wikipedia](https://en.wikipedia.org/wiki/Fibonacci_heap)
 - [CMake Tutorial](https://cmake.org/cmake/help/latest/guide/tutorial/)
 
