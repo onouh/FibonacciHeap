@@ -8,7 +8,23 @@
 #include <cmath>
 #include <algorithm>
 
+// UI Constants
+namespace {
+    constexpr int TITLE_FONT_SIZE = 18;
+    constexpr int EMPTY_HEAP_FONT_SIZE = 16;
+    constexpr int NODE_TEXT_FONT_SIZE = 12;
+}
+
 // HeapCanvas Implementation
+
+/**
+ * Constructor for HeapCanvas
+ * @param h Pointer to the FibonacciHeap to visualize
+ * @param parent Parent widget (optional)
+ * 
+ * Sets minimum size to 1200x600 to ensure adequate space for heap visualization.
+ * The canvas uses an expanding size policy to fill available space.
+ */
 HeapCanvas::HeapCanvas(FibonacciHeap<int>* h, QWidget* parent)
     : QWidget(parent), heap(h) {
     setMinimumSize(1200, 600);
@@ -25,7 +41,7 @@ void HeapCanvas::paintEvent(QPaintEvent* event) {
     if (heap->isEmpty()) {
         painter.setPen(Qt::gray);
         QFont font = painter.font();
-        font.setPointSize(16);
+        font.setPointSize(EMPTY_HEAP_FONT_SIZE);
         painter.setFont(font);
         painter.drawText(rect(), Qt::AlignCenter, "Heap is empty");
         return;
@@ -119,7 +135,7 @@ void HeapCanvas::drawNode(QPainter& painter, FibonacciNode<int>* node, float x, 
     // Draw key value
     painter.setPen(Qt::black);
     QFont font = painter.font();
-    font.setPointSize(12);
+    font.setPointSize(NODE_TEXT_FONT_SIZE);
     font.setBold(true);
     painter.setFont(font);
     
@@ -135,8 +151,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     resize(1200, 800);
 }
 
-MainWindow::~MainWindow() {
-}
+MainWindow::~MainWindow() = default;
 
 void MainWindow::setupUI() {
     // Create central widget
@@ -149,7 +164,7 @@ void MainWindow::setupUI() {
     // Title label
     QLabel* titleLabel = new QLabel("Fibonacci Heap Visualization", this);
     QFont titleFont = titleLabel->font();
-    titleFont.setPointSize(18);
+    titleFont.setPointSize(TITLE_FONT_SIZE);
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
     mainLayout->addWidget(titleLabel);
