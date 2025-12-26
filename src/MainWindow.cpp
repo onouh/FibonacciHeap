@@ -248,7 +248,12 @@ void MainWindow::onExtractMinClicked() {
     }
     
     try {
-        int minValue = heap.getMin()->key;  // Get key from the min node
+        FibonacciHeap<int>::Node* minNode = heap.getMin();
+        if (!minNode) {
+            updateStatus("Error: Heap min node is null");
+            return;
+        }
+        int minValue = minNode->key;
         FibonacciHeap<int>::Node* extracted = heap.extractMin();
         delete extracted;  // Free the extracted node
         updateStatus(QString("Extracted min: %1").arg(minValue));
