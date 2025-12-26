@@ -35,8 +35,8 @@ void HeapCanvas::paintEvent(QPaintEvent* event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     
-    // Background
-    painter.fillRect(rect(), QColor(250, 250, 250));
+    // Clean white background
+    painter.fillRect(rect(), Qt::white);
     
     if (heap->isEmpty()) {
         painter.setPen(Qt::gray);
@@ -111,29 +111,19 @@ void HeapCanvas::positionSubtree(FibonacciHeap<int>::Node* node, float x, float 
 }
 
 void HeapCanvas::drawConnections(QPainter& painter) {
-    QPen pen(QColor(100, 100, 100), 2);
+    // Simple line connections without arrows for cleaner look
+    QPen pen(QColor(150, 150, 150), 1.5);
     painter.setPen(pen);
     
     for (const auto& [node, pos] : nodePositions) {
         if (node->child) {
-            // Draw lines to children
+            // Draw simple lines to children
             FibonacciHeap<int>::Node* child = node->child;
             FibonacciHeap<int>::Node* start = child;
             do {
                 if (nodePositions.find(child) != nodePositions.end()) {
                     QPointF childPos = nodePositions[child];
                     painter.drawLine(pos, childPos);
-                    
-                    // Draw small arrowhead
-                    QPointF direction = childPos - pos;
-                    float length = std::sqrt(direction.x() * direction.x() + direction.y() * direction.y());
-                    if (length > 0) {
-                        direction /= length;
-                        QPointF arrowTip = childPos - direction * NODE_RADIUS;
-                        QPointF perpendicular(-direction.y(), direction.x());
-                        painter.drawLine(arrowTip, arrowTip - direction * 8 + perpendicular * 4);
-                        painter.drawLine(arrowTip, arrowTip - direction * 8 - perpendicular * 4);
-                    }
                 }
                 child = child->right;
             } while (child != start);
@@ -142,59 +132,38 @@ void HeapCanvas::drawConnections(QPainter& painter) {
 }
 
 void HeapCanvas::drawPointerLines(QPainter& painter) {
-    // Draw sibling connections as dashed lines
-    QPen siblingPen(QColor(200, 200, 200), 1, Qt::DashLine);
-    painter.setPen(siblingPen);
-    
-    for (const auto& [node, pos] : nodePositions) {
-        // Draw connection to right sibling for root nodes
-        if (node->parent == nullptr && node->right != node) {
-            if (nodePositions.find(node->right) != nodePositions.end()) {
-                QPointF rightPos = nodePositions[node->right];
-                // Draw curved line above nodes
-                QPainterPath path;
-                path.moveTo(pos.x() + NODE_RADIUS, pos.y());
-                QPointF control((pos.x() + rightPos.x()) / 2, pos.y() - 30);
-                path.quadTo(control, QPointF(rightPos.x() - NODE_RADIUS, rightPos.y()));
-                painter.drawPath(path);
-            }
-        }
-    }
+    // Remove dashed sibling lines for simpler visualization
+    // This makes the graph cleaner and less cluttered
 }
 
 void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, float x, float y, bool isRoot) {
-    // Determine node color
+    // Simplified color scheme
     QColor fillColor;
     bool isMin = (node == heap->getMin());
     bool isSelected = (node == selectedNode);
     bool isHighlighted = (node == highlightedNode);
     
-    if (isHighlighted) {
-        fillColor = QColor(255, 255, 0);  // Yellow for highlighted (Find Min)
-    } else if (isMin) {
-        fillColor = QColor(255, 215, 0);  // Gold for minimum
-    } else if (node->marked) {
-        fillColor = QColor(255, 140, 0);  // Orange for marked
-    } else if (isRoot) {
-        fillColor = QColor(144, 238, 144);  // Light green for roots
+    // Simple color scheme: white for regular nodes, blue for minimum/highlighted
+    if (isHighlighted || isMin) {
+        fillColor = QColor(100, 150, 255);  // Soft blue for minimum/highlighted
     } else {
-        fillColor = QColor(173, 216, 230);  // Light blue for other nodes
+        fillColor = QColor(245, 245, 245);  // Light gray/white for regular nodes
     }
     
     // Draw selection ring if selected
     if (isSelected) {
-        painter.setPen(QPen(Qt::red, 4));
+        painter.setPen(QPen(Qt::red, 3));
         painter.setBrush(Qt::NoBrush);
         painter.drawEllipse(QPointF(x, y), NODE_RADIUS + 5, NODE_RADIUS + 5);
     }
     
-    // Draw circle
-    painter.setPen(QPen(Qt::black, 2));
+    // Draw circle with simple black border
+    painter.setPen(QPen(QColor(60, 60, 60), 1.5));
     painter.setBrush(QBrush(fillColor));
     painter.drawEllipse(QPointF(x, y), NODE_RADIUS, NODE_RADIUS);
     
     // Draw key value
-    painter.setPen(Qt::black);
+    painter.setPen(QColor(30, 30, 30));
     QFont font = painter.font();
     font.setPointSize(NODE_TEXT_FONT_SIZE);
     font.setBold(true);
@@ -204,22 +173,11 @@ void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, flo
     QRectF textRect(x - NODE_RADIUS, y - NODE_RADIUS, NODE_RADIUS * 2, NODE_RADIUS * 2);
     painter.drawText(textRect, Qt::AlignCenter, text);
     
-    // Draw degree indicator
-    if (node->degree > 0) {
-        font.setPointSize(8);
-        font.setBold(false);
-        painter.setFont(font);
-        painter.setPen(QColor(100, 100, 100));
-        QString degreeText = QString("d:%1").arg(node->degree);
-        QRectF degreeRect(x - NODE_RADIUS, y + NODE_RADIUS - 12, NODE_RADIUS * 2, 10);
-        painter.drawText(degreeRect, Qt::AlignCenter, degreeText);
-    }
-    
-    // Draw marked indicator (small red dot)
+    // Small indicator for marked nodes (keep this subtle for important info)
     if (node->marked) {
-        painter.setPen(Qt::red);
-        painter.setBrush(Qt::red);
-        painter.drawEllipse(QPointF(x + NODE_RADIUS - 8, y - NODE_RADIUS + 8), 4, 4);
+        painter.setPen(QPen(QColor(200, 100, 100), 2));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(QPointF(x, y), NODE_RADIUS - 3, NODE_RADIUS - 3);
     }
 }
 
@@ -420,7 +378,7 @@ void MainWindow::setupUI() {
     canvas = new HeapCanvas(&heap, animationSystem, this);
     mainLayout->addWidget(canvas, 1);  // Stretch factor 1
     
-    // Legend
+    // Legend - Simplified
     QGroupBox* legendGroup = new QGroupBox("Legend", this);
     QHBoxLayout* legendLayout = new QHBoxLayout(legendGroup);
     
@@ -433,12 +391,12 @@ void MainWindow::setupUI() {
         legendLayout->addWidget(textLabel);
     };
     
-    addLegendItem("Minimum", QColor(255, 215, 0));
-    addLegendItem("Root", QColor(144, 238, 144));
-    addLegendItem("Marked", QColor(255, 140, 0));
-    addLegendItem("Regular", QColor(173, 216, 230));
-    addLegendItem("Highlighted", QColor(255, 255, 0));
-    addLegendItem("Selected", QColor(255, 0, 0));
+    addLegendItem("Minimum/Highlighted", QColor(100, 150, 255));
+    addLegendItem("Regular Node", QColor(245, 245, 245));
+    addLegendItem("Selected (Red Border)", QColor(255, 0, 0));
+    QLabel* markedNote = new QLabel("• Marked nodes have double border", this);
+    markedNote->setStyleSheet("QLabel { font-style: italic; color: #666; }");
+    legendLayout->addWidget(markedNote);
     legendLayout->addStretch();
     
     mainLayout->addWidget(legendGroup);
@@ -489,7 +447,7 @@ void MainWindow::onFindMinClicked() {
     auto* minNode = heap.getMin();
     if (minNode) {
         canvas->setHighlightedNode(minNode);
-        updateStatus(QString("Minimum value: %1 (highlighted in yellow)").arg(minNode->key));
+        updateStatus(QString("Minimum value: %1 (highlighted in blue)").arg(minNode->key));
     }
 }
 
