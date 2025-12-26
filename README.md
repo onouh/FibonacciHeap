@@ -235,5 +235,8 @@ This project is part of a Data Structures Course final project.
 ### TaskManagerGUI - Emergency Care Management
 ![Task Manager GUI](https://github.com/user-attachments/assets/b53e3352-3375-47e5-b4a3-c0249f6064bb)
 
-*The emergency care management application showing priority-based patient queue with color-coded urgency levels and action buttons.*
+*The emergency care management application showing priority-based patient queue with color-coded urgency levels and
+
+Helpful Source:
+  ![Fibonacci Heap](https://www.youtube.com/watch?v=6JxvKfSV9Ns&list=PPSV)
  
