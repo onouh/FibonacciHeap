@@ -3,6 +3,8 @@
 #include <QDateTime>
 #include <QGroupBox>
 #include <QFrame>
+#include <QGraphicsBlurEffect>
+#include <QPainter>
 
 AppWindow::AppWindow(QWidget* parent) 
     : QMainWindow(parent), taskCounter(0) {
@@ -24,8 +26,19 @@ void AppWindow::setupUI() {
     setWindowTitle("Emergency Care Management System");
     setMinimumSize(900, 700);
     
+    // Set background image with blur effect using stylesheet
+    setStyleSheet(
+        "QMainWindow {"
+        "   background-image: url(/Users/ONouh/Downloads/background.jpg);"  // CHANGE THIS to your image path
+        "   background-position: center;"
+        "   background-repeat: no-repeat;"
+        "   background-attachment: fixed;"
+        "}"
+    );
+    
     // Central widget
     centralWidget = new QWidget(this);
+    centralWidget->setStyleSheet("background-color: rgba(255, 255, 255, 0.3);");  // Semi-transparent overlay
     setCentralWidget(centralWidget);
     mainLayout = new QVBoxLayout(centralWidget);
     mainLayout->setSpacing(10);
@@ -38,15 +51,15 @@ void AppWindow::setupUI() {
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
     titleLabel->setAlignment(Qt::AlignCenter);
-    titleLabel->setStyleSheet("color: #2c3e50; padding: 10px; background-color: #ecf0f1; border-radius: 5px;");
+    titleLabel->setStyleSheet("color: #2c3e50; padding: 10px; background-color: rgba(236, 240, 241, 0.85); border-radius: 5px;");
     mainLayout->addWidget(titleLabel);
     
     // Status bar with time and active tasks
     QHBoxLayout* statusLayout = new QHBoxLayout();
     timeLabel = new QLabel("Time: --:--:--", this);
-    timeLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #34495e; padding: 5px;");
+    timeLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #34495e; padding: 5px; background-color: rgba(255, 255, 255, 0.75); border-radius: 3px;");
     activeTasksLabel = new QLabel("0 Active Tasks", this);
-    activeTasksLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #e74c3c; padding: 5px;");
+    activeTasksLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #e74c3c; padding: 5px; background-color: rgba(255, 255, 255, 0.75); border-radius: 3px;");
     statusLayout->addWidget(timeLabel);
     statusLayout->addStretch();
     statusLayout->addWidget(activeTasksLabel);
@@ -54,18 +67,19 @@ void AppWindow::setupUI() {
     
     // Control buttons
     QGroupBox* controlGroup = new QGroupBox("Actions", this);
+    controlGroup->setStyleSheet("QGroupBox { background-color: rgba(255, 255, 255, 0.8); border-radius: 5px; padding: 10px; font-weight: bold; }");
     QHBoxLayout* controlLayout = new QHBoxLayout(controlGroup);
     
     QPushButton* addBtn = new QPushButton("➕ Add Patient", this);
-    addBtn->setStyleSheet("background-color: #3498db; color: white; padding: 10px; font-size: 13px; border-radius: 5px;");
+    addBtn->setStyleSheet("background-color: rgba(52, 152, 219, 0.9); color: white; padding: 10px; font-size: 13px; border-radius: 5px;");
     connect(addBtn, &QPushButton::clicked, this, &AppWindow::addTask);
     
     QPushButton* urgentBtn = new QPushButton("⚠️ View Most Urgent", this);
-    urgentBtn->setStyleSheet("background-color: #f39c12; color: white; padding: 10px; font-size: 13px; border-radius: 5px;");
+    urgentBtn->setStyleSheet("background-color: rgba(243, 156, 18, 0.9); color: white; padding: 10px; font-size: 13px; border-radius: 5px;");
     connect(urgentBtn, &QPushButton::clicked, this, &AppWindow::viewUrgent);
     
     QPushButton* treatBtn = new QPushButton("✅ Treat Next", this);
-    treatBtn->setStyleSheet("background-color: #27ae60; color: white; padding: 10px; font-size: 13px; border-radius: 5px;");
+    treatBtn->setStyleSheet("background-color: rgba(39, 174, 96, 0.9); color: white; padding: 10px; font-size: 13px; border-radius: 5px;");
     connect(treatBtn, &QPushButton::clicked, this, &AppWindow::treatNext);
     
     controlLayout->addWidget(addBtn);
@@ -75,13 +89,15 @@ void AppWindow::setupUI() {
     
     // Task list area
     QGroupBox* taskGroup = new QGroupBox("Patient Queue (Priority Order)", this);
+    taskGroup->setStyleSheet("QGroupBox { background-color: rgba(255, 255, 255, 0.85); border-radius: 5px; padding: 10px; font-weight: bold; }");
     QVBoxLayout* taskGroupLayout = new QVBoxLayout(taskGroup);
     
     scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true);
-    scrollArea->setStyleSheet("QScrollArea { border: 1px solid #bdc3c7; background-color: #ffffff; }");
+    scrollArea->setStyleSheet("QScrollArea { border: 1px solid rgba(189, 195, 199, 0.8); background-color: rgba(255, 255, 255, 0.6); }");
     
     QWidget* scrollWidget = new QWidget();
+    scrollWidget->setStyleSheet("background-color: transparent;");
     taskListLayout = new QVBoxLayout(scrollWidget);
     taskListLayout->setAlignment(Qt::AlignTop);
     taskListLayout->setSpacing(5);
@@ -93,7 +109,7 @@ void AppWindow::setupUI() {
     // Legend
     QLabel* legendLabel = new QLabel(
         "Priority Levels: 🔴 CRITICAL | 🟠 URGENT | 🟡 MODERATE | 🟢 MINOR", this);
-    legendLabel->setStyleSheet("font-size: 11px; color: #7f8c8d; padding: 5px;");
+    legendLabel->setStyleSheet("font-size: 11px; color: #2c3e50; padding: 5px; background-color: rgba(255, 255, 255, 0.75); border-radius: 3px;");
     legendLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(legendLabel);
 }
@@ -132,8 +148,10 @@ void AppWindow::refreshTaskList() {
         
         for (const auto& task : tasks) {
             QFrame* taskFrame = new QFrame(this);
+            QColor bgColor = urgencyToColor(task.urgency);
+            bgColor.setAlpha(220);  // Add transparency to task cards
             taskFrame->setStyleSheet(
-                "QFrame { background-color: " + urgencyToColor(task.urgency).name() + 
+                "QFrame { background-color: " + bgColor.name(QColor::HexArgb) + 
                 "; border-left: 5px solid #34495e; border-radius: 3px; padding: 8px; margin: 2px; }"
             );
             
@@ -152,14 +170,14 @@ void AppWindow::refreshTaskList() {
             // Action buttons
             QPushButton* completeBtn = new QPushButton("Complete", this);
             completeBtn->setFixedWidth(80);
-            completeBtn->setStyleSheet("background-color: #27ae60; color: white; border-radius: 3px; padding: 5px;");
+            completeBtn->setStyleSheet("background-color: rgba(39, 174, 96, 0.9); color: white; border-radius: 3px; padding: 5px;");
             connect(completeBtn, &QPushButton::clicked, this, [this, taskName = task.name]() {
                 completeTask(QString::fromStdString(taskName));
             });
             
             QPushButton* updateBtn = new QPushButton("Update", this);
             updateBtn->setFixedWidth(80);
-            updateBtn->setStyleSheet("background-color: #3498db; color: white; border-radius: 3px; padding: 5px;");
+            updateBtn->setStyleSheet("background-color: rgba(52, 152, 219, 0.9); color: white; border-radius: 3px; padding: 5px;");
             connect(updateBtn, &QPushButton::clicked, this, [this, taskName = task.name]() {
                 updateTaskPriority(QString::fromStdString(taskName));
             });
@@ -272,10 +290,10 @@ QString AppWindow::urgencyToString(Urgency priority) const {
 
 QColor AppWindow::urgencyToColor(Urgency priority) const {
     switch (priority) {
-        case Urgency::CRITICAL: return QColor("#ffebee");  // Light red
-        case Urgency::URGENT: return QColor("#fff3e0");    // Light orange
-        case Urgency::MODERATE: return QColor("#fff9c4");  // Light yellow
-        case Urgency::MINOR: return QColor("#e8f5e9");     // Light green
+        case Urgency::CRITICAL: return QColor("#ffebee");
+        case Urgency::URGENT: return QColor("#fff3e0");
+        case Urgency::MODERATE: return QColor("#fff9c4");
+        case Urgency::MINOR: return QColor("#e8f5e9");
         default: return QColor("#f5f5f5");
     }
 }
