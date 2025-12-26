@@ -43,7 +43,10 @@ public:
     Node* getMin() const;
     bool isEmpty() const;
     int getSize() const;
-    void displayMin() const; 
+    void displayMin() const;
+    void cut(Node* x, Node* y);
+    void cascadingCut(Node* y);
+    void decreaseKey(Node* x, T newKey);
     void merge(FibonacciHeap& otherHeap);
     void linkNodes(Node*a, Node*b);
     void consolidate();

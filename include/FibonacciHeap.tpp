@@ -223,4 +223,63 @@ std::vector<typename FibonacciHeap<T>::Node*> FibonacciHeap<T>::getRootList() co
     return roots;
 }
 
+template<typename T>
+void FibonacciHeap<T>::cut(FibonacciHeap<T>::Node* x, FibonacciHeap<T>::Node* y) {
+    // Remove x from child list of y
+    if (x->right == x) {
+        y->child = nullptr;
+    } else {
+        x->left->right = x->right;
+        x->right->left = x->left;
+        if (y->child == x) {
+            y->child = x->right;
+        }
+    }
+    
+    y->degree--;
+    
+    // Add x to root list
+    x->left = minNode;
+    x->right = minNode->right;
+    minNode->right->left = x;
+    minNode->right = x;
+    
+    x->parent = nullptr;
+    x->marked = false;
+}
+
+template<typename T>
+void FibonacciHeap<T>::cascadingCut(FibonacciHeap<T>::Node* y) {
+    FibonacciNode<T>* z = y->parent;
+    
+    if (z) {
+        if (!y->marked) {
+            y->marked = true;
+        } else {
+            cut(y, z);
+            cascadingCut(z);
+        }
+    }
+}
+
+template<typename T>
+void FibonacciHeap<T>::decreaseKey(FibonacciHeap<T>::Node* x, T newKey) {
+    if (newKey > x->key) {
+        throw std::invalid_argument("New key is greater than current key");
+    }
+    
+    x->key = newKey;
+    FibonacciNode<T>* y = x->parent;
+    
+    if (y && x->key < y->key) {
+        cut(x, y);
+        cascadingCut(y);
+    }
+    
+    if (x->key < minNode->key) {
+        minNode = x;
+    }
+}
+
+
 #endif
