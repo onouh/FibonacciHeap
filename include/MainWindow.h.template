@@ -1,0 +1,138 @@
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include <QMainWindow>
+#include <QWidget>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QLabel>
+#include <QPainter>
+#include <QPoint>
+#include <QComboBox>
+#include <QSlider>
+#include <QSpinBox>
+#include <QMouseEvent>
+#include <map>
+#include <memory>
+#include "FibonacciHeap.hpp"
+#include "AnimationSystem.h"
+#include "TypeSelector.h"
+
+/**
+ * Canvas widget for drawing the Fibonacci Heap with animation support
+ */
+template<typename T>
+class HeapCanvas : public QWidget {
+    Q_OBJECT
+    
+private:
+    FibonacciHeap<T>* heap;
+    AnimationSystem* animationSystem;
+    std::map<typename FibonacciHeap<T>::Node*, QPointF> nodePositions;
+    std::map<typename FibonacciHeap<T>::Node*, QPointF> animatedPositions;
+    typename FibonacciHeap<T>::Node* selectedNode;
+    typename FibonacciHeap<T>::Node* highlightedNode;
+    
+    // Constants
+    static constexpr float NODE_RADIUS = 30.0f;
+    static constexpr float HORIZONTAL_SPACING = 120.0f;
+    static constexpr float VERTICAL_SPACING = 100.0f;
+    static constexpr float SIBLING_SPACING = 80.0f;
+    
+    void calculateNodePositions();
+    void positionSubtree(typename FibonacciHeap<T>::Node* node, float x, float y, float& maxX, int depth = 0);
+    void drawNode(QPainter& painter, typename FibonacciHeap<T>::Node* node, float x, float y, bool isRoot);
+    void drawConnections(QPainter& painter);
+    void drawPointerLines(QPainter& painter);
+    typename FibonacciHeap<T>::Node* findNodeAtPosition(const QPointF& pos);
+    
+protected:
+    void paintEvent(QPaintEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    
+public:
+    explicit HeapCanvas(FibonacciHeap<T>* h, AnimationSystem* anim, QWidget* parent = nullptr);
+    
+    typename FibonacciHeap<T>::Node* getSelectedNode() const { return selectedNode; }
+    void setHighlightedNode(typename FibonacciHeap<T>::Node* node) { 
+        highlightedNode = node; 
+        update();
+    }
+    void clearSelection() { 
+        selectedNode = nullptr; 
+        highlightedNode = nullptr;
+        update();
+    }
+    
+signals:
+    void nodeSelected(typename FibonacciHeap<T>::Node* node);
+};
+
+/**
+ * Main window class for enhanced Fibonacci Heap visualization
+ * Supports multiple data types, animations, and all heap operations
+ */
+template<typename T>
+class MainWindow : public QMainWindow {
+    Q_OBJECT
+    
+private:
+    FibonacciHeap<T> heap;
+    FibonacciHeap<T> heap2;  // Second heap for union operation
+    AnimationSystem* animationSystem;
+    DataType dataType;
+    
+    // UI Elements - Input
+    QLineEdit* inputField;
+    QLineEdit* decreaseKeyField;
+    QSpinBox* keySpinBox;
+    
+    // UI Elements - Buttons
+    QPushButton* insertButton;
+    QPushButton* findMinButton;
+    QPushButton* extractMinButton;
+    QPushButton* decreaseKeyButton;
+    QPushButton* deleteNodeButton;
+    QPushButton* unionButton;
+    QPushButton* resetButton;
+    
+    // UI Elements - Animation controls
+    QSlider* speedSlider;
+    QPushButton* pauseResumeButton;
+    
+    // UI Elements - Display
+    QLabel* statusLabel;
+    QLabel* infoLabel;
+    HeapCanvas<T>* canvas;
+    
+    void setupUI();
+    void updateStatus(const QString& message);
+    void updateInfo();
+    void setupAnimationForExtractMin();
+    void setupAnimationForDecreaseKey(typename FibonacciHeap<T>::Node* node, int newKey);
+    
+private slots:
+    void onInsertClicked();
+    void onFindMinClicked();
+    void onExtractMinClicked();
+    void onDecreaseKeyClicked();
+    void onDeleteNodeClicked();
+    void onUnionClicked();
+    void onResetClicked();
+    void onPauseResumeClicked();
+    void onSpeedChanged(int value);
+    void onAnimationUpdate();
+    void onAnimationCompleted();
+    void onNodeSelected(typename FibonacciHeap<T>::Node* node);
+    
+public:
+    MainWindow(DataType type, QWidget* parent = nullptr);
+    ~MainWindow();
+};
+
+// Include template implementation
+#include "MainWindow.tpp"
+
+#endif // MAINWINDOW_H
