@@ -153,15 +153,15 @@ void AppWindow::refreshTaskList() {
             QPushButton* completeBtn = new QPushButton("Complete", this);
             completeBtn->setFixedWidth(80);
             completeBtn->setStyleSheet("background-color: #27ae60; color: white; border-radius: 3px; padding: 5px;");
-            connect(completeBtn, &QPushButton::clicked, this, [this, task]() {
-                completeTask(QString::fromStdString(task.name));
+            connect(completeBtn, &QPushButton::clicked, this, [this, taskName = task.name]() {
+                completeTask(QString::fromStdString(taskName));
             });
             
             QPushButton* updateBtn = new QPushButton("Update", this);
             updateBtn->setFixedWidth(80);
             updateBtn->setStyleSheet("background-color: #3498db; color: white; border-radius: 3px; padding: 5px;");
-            connect(updateBtn, &QPushButton::clicked, this, [this, task]() {
-                updateTaskPriority(QString::fromStdString(task.name));
+            connect(updateBtn, &QPushButton::clicked, this, [this, taskName = task.name]() {
+                updateTaskPriority(QString::fromStdString(taskName));
             });
             
             taskLayout->addWidget(priorityLabel);

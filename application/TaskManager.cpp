@@ -19,7 +19,8 @@ bool TaskManager::updatePatientStatus(const std::string& name, Urgency newLevel)
                 task.urgency = newLevel;
                 return true;
             } else if (newPriority > currentPriority) {
-                // For increasing priority (lower urgency), we need to delete and re-insert
+                // For worsening priority (higher priority value = lower urgency)
+                // we need to delete and re-insert since decreaseKey only works for improvements
                 heap.deleteNode(task.heapNode);
                 task.heapNode = heap.insert(name, newPriority);
                 task.urgency = newLevel;
