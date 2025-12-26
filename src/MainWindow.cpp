@@ -143,11 +143,11 @@ void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, flo
     bool isSelected = (node == selectedNode);
     bool isHighlighted = (node == highlightedNode);
     
-    // Simple color scheme: white for regular nodes, blue for minimum/highlighted
+    // Simple color scheme: light gray for regular nodes, blue for minimum/highlighted
     if (isHighlighted || isMin) {
         fillColor = QColor(100, 150, 255);  // Soft blue for minimum/highlighted
     } else {
-        fillColor = QColor(245, 245, 245);  // Light gray/white for regular nodes
+        fillColor = QColor(245, 245, 245);  // Light gray for regular nodes
     }
     
     // Draw selection ring if selected
@@ -157,7 +157,7 @@ void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, flo
         painter.drawEllipse(QPointF(x, y), NODE_RADIUS + 5, NODE_RADIUS + 5);
     }
     
-    // Draw circle with simple black border
+    // Draw circle with thin dark gray border
     painter.setPen(QPen(QColor(60, 60, 60), 1.5));
     painter.setBrush(QBrush(fillColor));
     painter.drawEllipse(QPointF(x, y), NODE_RADIUS, NODE_RADIUS);
