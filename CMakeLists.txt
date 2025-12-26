@@ -20,12 +20,18 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(SOURCES
     src/main.cpp
     src/MainWindow.cpp
+    src/AnimationSystem.cpp
+    src/TypeSelector.cpp
 )
 
 # Header files
 set(HEADERS
     include/FibonacciHeap.hpp
     include/MainWindow.h
+    include/AnimationSystem.h
+    include/TypeSelector.h
+    include/HeapInterface.h
+    include/HeapWrapper.h
 )
 
 # Create executable

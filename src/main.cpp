@@ -6,6 +6,7 @@ int main(int argc, char *argv[]) {
     try {
         QApplication app(argc, argv);
         
+        // Create main window for integer type
         MainWindow window;
         window.show();
         
@@ -16,3 +17,4 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 }
+

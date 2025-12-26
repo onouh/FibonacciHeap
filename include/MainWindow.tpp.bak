@@ -1,3 +1,6 @@
+#ifndef MAINWINDOW_TPP
+#define MAINWINDOW_TPP
+
 #include "MainWindow.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -8,30 +11,69 @@
 #include <QBrush>
 #include <QFont>
 #include <QToolTip>
-#include <QPainterPath>
 #include <cmath>
 #include <algorithm>
+#include <sstream>
 
 // UI Constants
 namespace {
     constexpr int TITLE_FONT_SIZE = 18;
     constexpr int EMPTY_HEAP_FONT_SIZE = 16;
     constexpr int NODE_TEXT_FONT_SIZE = 11;
+    constexpr int INFO_FONT_SIZE = 10;
 }
 
-// =====================================================================
-// HeapCanvas Implementation
-// =====================================================================
+// Helper function to convert value to string
+template<typename T>
+QString valueToString(const T& value) {
+    if constexpr (std::is_same_v<T, int>) {
+        return QString::number(value);
+    } else if constexpr (std::is_same_v<T, char>) {
+        return QString(QChar(value));
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        return QString::fromStdString(value);
+    }
+    return "";
+}
 
-HeapCanvas::HeapCanvas(FibonacciHeap<int>* h, AnimationSystem* anim, QWidget* parent)
-    : QWidget(parent), heap(h), animationSystem(anim), 
-      selectedNode(nullptr), highlightedNode(nullptr) {
+// Helper function to parse input string
+template<typename T>
+T parseInput(const QString& str, bool& ok) {
+    ok = true;
+    if constexpr (std::is_same_v<T, int>) {
+        int val = str.toInt(&ok);
+        return ok ? val : 0;
+    } else if constexpr (std::is_same_v<T, char>) {
+        if (str.isEmpty()) {
+            ok = false;
+            return '\0';
+        }
+        return str.at(0).toLatin1();
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        if (str.isEmpty()) {
+            ok = false;
+            return "";
+        }
+        return str.toStdString();
+    }
+    ok = false;
+    return T();
+}
+
+// ======================
+// HeapCanvas Implementation
+// ======================
+
+template<typename T>
+HeapCanvas<T>::HeapCanvas(FibonacciHeap<T>* h, AnimationSystem* anim, QWidget* parent)
+    : QWidget(parent), heap(h), animationSystem(anim), selectedNode(nullptr), highlightedNode(nullptr) {
     setMinimumSize(1400, 700);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMouseTracking(true);
 }
 
-void HeapCanvas::paintEvent(QPaintEvent* event) {
+template<typename T>
+void HeapCanvas<T>::paintEvent(QPaintEvent* event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     
@@ -43,30 +85,42 @@ void HeapCanvas::paintEvent(QPaintEvent* event) {
         QFont font = painter.font();
         font.setPointSize(EMPTY_HEAP_FONT_SIZE);
         painter.setFont(font);
-        painter.drawText(rect(), Qt::AlignCenter, "Heap is empty - Click Insert to add nodes");
+        painter.drawText(rect(), Qt::AlignCenter, "Heap is empty - Add nodes to begin visualization");
         return;
     }
     
     calculateNodePositions();
     
-    // Draw pointer lines (sibling relationships)
+    // Draw pointer lines (parent/child/sibling relationships)
     drawPointerLines(painter);
     
-    // Draw parent-child connections
+    // Draw connections
     drawConnections(painter);
     
     // Draw nodes
     for (const auto& [node, pos] : nodePositions) {
-        drawNode(painter, node, pos.x(), pos.y(), node->parent == nullptr);
+        QPointF drawPos = pos;
+        // Use animated position if available
+        if (animatedPositions.find(node) != animatedPositions.end()) {
+            const AnimationStep* step = animationSystem->getCurrentStep();
+            if (step && animationSystem->isAnimating()) {
+                float progress = animationSystem->getCurrentProgress();
+                QPointF start = nodePositions[node];
+                QPointF end = animatedPositions[node];
+                drawPos = start + (end - start) * progress;
+            }
+        }
+        drawNode(painter, node, drawPos.x(), drawPos.y(), node->parent == nullptr);
     }
 }
 
-void HeapCanvas::calculateNodePositions() {
+template<typename T>
+void HeapCanvas<T>::calculateNodePositions() {
     nodePositions.clear();
     
     if (heap->isEmpty()) return;
     
-    Vector<FibonacciHeap<int>::Node*> roots = heap->getRootList();
+    Vector<typename FibonacciHeap<T>::Node*> roots = heap->getRootList();
     
     float startX = 150;
     float startY = 100;
@@ -79,7 +133,8 @@ void HeapCanvas::calculateNodePositions() {
     }
 }
 
-void HeapCanvas::positionSubtree(FibonacciHeap<int>::Node* node, float x, float y, float& maxX, int depth) {
+template<typename T>
+void HeapCanvas<T>::positionSubtree(typename FibonacciHeap<T>::Node* node, float x, float y, float& maxX, int depth) {
     if (!node) return;
     
     nodePositions[node] = QPointF(x, y);
@@ -87,18 +142,17 @@ void HeapCanvas::positionSubtree(FibonacciHeap<int>::Node* node, float x, float 
     
     // Position children
     if (node->child) {
-        FibonacciHeap<int>::Node* child = node->child;
-        FibonacciHeap<int>::Node* start = child;
+        typename FibonacciHeap<T>::Node* child = node->child;
+        typename FibonacciHeap<T>::Node* start = child;
         
-        // Count children
+        // Calculate total width needed for children
         int childCount = 0;
-        FibonacciHeap<int>::Node* temp = child;
+        typename FibonacciHeap<T>::Node* temp = child;
         do {
             childCount++;
             temp = temp->right;
         } while (temp != start);
         
-        // Calculate spacing
         float totalChildWidth = (childCount - 1) * SIBLING_SPACING;
         float childX = x - totalChildWidth / 2.0f;
         
@@ -110,21 +164,23 @@ void HeapCanvas::positionSubtree(FibonacciHeap<int>::Node* node, float x, float 
     }
 }
 
-void HeapCanvas::drawConnections(QPainter& painter) {
+template<typename T>
+void HeapCanvas<T>::drawConnections(QPainter& painter) {
     QPen pen(QColor(100, 100, 100), 2);
     painter.setPen(pen);
     
     for (const auto& [node, pos] : nodePositions) {
         if (node->child) {
             // Draw lines to children
-            FibonacciHeap<int>::Node* child = node->child;
-            FibonacciHeap<int>::Node* start = child;
+            typename FibonacciHeap<T>::Node* child = node->child;
+            typename FibonacciHeap<T>::Node* start = child;
             do {
                 if (nodePositions.find(child) != nodePositions.end()) {
                     QPointF childPos = nodePositions[child];
+                    // Draw arrow from parent to child
                     painter.drawLine(pos, childPos);
                     
-                    // Draw small arrowhead
+                    // Draw arrowhead
                     QPointF direction = childPos - pos;
                     float length = std::sqrt(direction.x() * direction.x() + direction.y() * direction.y());
                     if (length > 0) {
@@ -141,20 +197,22 @@ void HeapCanvas::drawConnections(QPainter& painter) {
     }
 }
 
-void HeapCanvas::drawPointerLines(QPainter& painter) {
-    // Draw sibling connections as dashed lines
+template<typename T>
+void HeapCanvas<T>::drawPointerLines(QPainter& painter) {
+    // Draw sibling connections (left/right pointers in root list and child lists)
     QPen siblingPen(QColor(200, 200, 200), 1, Qt::DashLine);
     painter.setPen(siblingPen);
     
     for (const auto& [node, pos] : nodePositions) {
-        // Draw connection to right sibling for root nodes
+        // Draw sibling connections for nodes at the same level
         if (node->parent == nullptr && node->right != node) {
+            // Root list connections
             if (nodePositions.find(node->right) != nodePositions.end()) {
                 QPointF rightPos = nodePositions[node->right];
                 // Draw curved line above nodes
                 QPainterPath path;
                 path.moveTo(pos.x() + NODE_RADIUS, pos.y());
-                QPointF control((pos.x() + rightPos.x()) / 2, pos.y() - 30);
+                QPointF control(( pos.x() + rightPos.x()) / 2, pos.y() - 30);
                 path.quadTo(control, QPointF(rightPos.x() - NODE_RADIUS, rightPos.y()));
                 painter.drawPath(path);
             }
@@ -162,7 +220,8 @@ void HeapCanvas::drawPointerLines(QPainter& painter) {
     }
 }
 
-void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, float x, float y, bool isRoot) {
+template<typename T>
+void HeapCanvas<T>::drawNode(QPainter& painter, typename FibonacciHeap<T>::Node* node, float x, float y, bool isRoot) {
     // Determine node color
     QColor fillColor;
     bool isMin = (node == heap->getMin());
@@ -215,7 +274,7 @@ void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, flo
         painter.drawText(degreeRect, Qt::AlignCenter, degreeText);
     }
     
-    // Draw marked indicator (small red dot)
+    // Draw marked indicator
     if (node->marked) {
         painter.setPen(Qt::red);
         painter.setBrush(Qt::red);
@@ -223,7 +282,8 @@ void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, flo
     }
 }
 
-FibonacciHeap<int>::Node* HeapCanvas::findNodeAtPosition(const QPointF& pos) {
+template<typename T>
+typename FibonacciHeap<T>::Node* HeapCanvas<T>::findNodeAtPosition(const QPointF& pos) {
     for (const auto& [node, nodePos] : nodePositions) {
         float dx = pos.x() - nodePos.x();
         float dy = pos.y() - nodePos.y();
@@ -235,9 +295,10 @@ FibonacciHeap<int>::Node* HeapCanvas::findNodeAtPosition(const QPointF& pos) {
     return nullptr;
 }
 
-void HeapCanvas::mousePressEvent(QMouseEvent* event) {
+template<typename T>
+void HeapCanvas<T>::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
-        FibonacciHeap<int>::Node* node = findNodeAtPosition(event->position());
+        typename FibonacciHeap<T>::Node* node = findNodeAtPosition(event->position());
         if (node) {
             selectedNode = node;
             emit nodeSelected(node);
@@ -246,13 +307,18 @@ void HeapCanvas::mousePressEvent(QMouseEvent* event) {
     }
 }
 
-void HeapCanvas::mouseMoveEvent(QMouseEvent* event) {
-    FibonacciHeap<int>::Node* node = findNodeAtPosition(event->position());
+template<typename T>
+void HeapCanvas<T>::mouseReleaseEvent(QMouseEvent* event) {
+    Q_UNUSED(event);
+}
+
+template<typename T>
+void HeapCanvas<T>::mouseMoveEvent(QMouseEvent* event) {
+    typename FibonacciHeap<T>::Node* node = findNodeAtPosition(event->position());
     if (node) {
         // Show tooltip with node information
-        QString tooltip = QString("Key: %1\nValue: %2\nDegree: %3\nMarked: %4")
+        QString tooltip = QString("Key: %1\nDegree: %2\nMarked: %3")
             .arg(node->key)
-            .arg(node->value)
             .arg(node->degree)
             .arg(node->marked ? "Yes" : "No");
         QToolTip::showText(event->globalPosition().toPoint(), tooltip, this);
@@ -262,34 +328,38 @@ void HeapCanvas::mouseMoveEvent(QMouseEvent* event) {
     }
 }
 
-void HeapCanvas::setHighlightedNode(FibonacciHeap<int>::Node* node) {
-    highlightedNode = node;
-    update();
-}
-
-void HeapCanvas::clearSelection() {
-    selectedNode = nullptr;
-    highlightedNode = nullptr;
-    update();
-}
-
-// =====================================================================
+// ======================
 // MainWindow Implementation
-// =====================================================================
+// ======================
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+template<typename T>
+MainWindow<T>::MainWindow(DataType type, QWidget* parent) 
+    : QMainWindow(parent), dataType(type) {
+    
     animationSystem = new AnimationSystem(this);
     connect(animationSystem, &AnimationSystem::animationUpdate, this, &MainWindow::onAnimationUpdate);
     connect(animationSystem, &AnimationSystem::animationCompleted, this, &MainWindow::onAnimationCompleted);
     
     setupUI();
-    setWindowTitle("Fibonacci Heap - Interactive Visualization (Integer Type)");
+    
+    QString typeStr;
+    if constexpr (std::is_same_v<T, int>) {
+        typeStr = "Integer";
+    } else if constexpr (std::is_same_v<T, char>) {
+        typeStr = "Character";
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        typeStr = "String";
+    }
+    
+    setWindowTitle(QString("Fibonacci Heap Visualization - %1 Type").arg(typeStr));
     resize(1600, 900);
 }
 
-MainWindow::~MainWindow() = default;
+template<typename T>
+MainWindow<T>::~MainWindow() = default;
 
-void MainWindow::setupUI() {
+template<typename T>
+void MainWindow<T>::setupUI() {
     // Create central widget
     QWidget* centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
@@ -300,7 +370,7 @@ void MainWindow::setupUI() {
     mainLayout->setContentsMargins(10, 10, 10, 10);
     
     // Title label
-    QLabel* titleLabel = new QLabel("Fibonacci Heap - Interactive Visualization with Animations", this);
+    QLabel* titleLabel = new QLabel("Fibonacci Heap - Interactive Visualization", this);
     QFont titleFont = titleLabel->font();
     titleFont.setPointSize(TITLE_FONT_SIZE);
     titleFont.setBold(true);
@@ -310,7 +380,7 @@ void MainWindow::setupUI() {
     
     // Status and info area
     QHBoxLayout* statusLayout = new QHBoxLayout();
-    statusLabel = new QLabel("Ready - Insert values to begin", this);
+    statusLabel = new QLabel("Ready", this);
     statusLabel->setStyleSheet("QLabel { color: green; font-weight: bold; }");
     statusLayout->addWidget(statusLabel);
     
@@ -331,7 +401,14 @@ void MainWindow::setupUI() {
     controlLayout->addWidget(insertLabel, row, 0);
     
     inputField = new QLineEdit(this);
-    inputField->setPlaceholderText("Enter integer (e.g., 42)");
+    if constexpr (std::is_same_v<T, int>) {
+        inputField->setPlaceholderText("Enter integer (e.g., 42)");
+    } else if constexpr (std::is_same_v<T, char>) {
+        inputField->setPlaceholderText("Enter character (e.g., A)");
+        inputField->setMaxLength(1);
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        inputField->setPlaceholderText("Enter string (e.g., hello)");
+    }
     inputField->setMaximumWidth(200);
     controlLayout->addWidget(inputField, row, 1);
     
@@ -341,7 +418,7 @@ void MainWindow::setupUI() {
     row++;
     
     // Find Min button
-    findMinButton = new QPushButton("Find Min (Highlight)", this);
+    findMinButton = new QPushButton("Find Min", this);
     findMinButton->setStyleSheet("QPushButton { background-color: #FFD700; color: black; padding: 8px 16px; font-weight: bold; }");
     controlLayout->addWidget(findMinButton, row, 0, 1, 3);
     row++;
@@ -353,7 +430,7 @@ void MainWindow::setupUI() {
     row++;
     
     // Decrease Key controls
-    QLabel* decreaseKeyLabel = new QLabel("Decrease Key To:", this);
+    QLabel* decreaseKeyLabel = new QLabel("Decrease Key:", this);
     controlLayout->addWidget(decreaseKeyLabel, row, 0);
     
     keySpinBox = new QSpinBox(this);
@@ -364,21 +441,21 @@ void MainWindow::setupUI() {
     
     decreaseKeyButton = new QPushButton("Decrease Key (Animated)", this);
     decreaseKeyButton->setStyleSheet("QPushButton { background-color: #FF8C00; color: white; padding: 8px 16px; font-weight: bold; }");
-    decreaseKeyButton->setToolTip("Select a node by clicking on it first");
+    decreaseKeyButton->setToolTip("Select a node by clicking on it, then use this button");
     controlLayout->addWidget(decreaseKeyButton, row, 2);
     row++;
     
     // Delete Node button
     deleteNodeButton = new QPushButton("Delete Selected Node", this);
     deleteNodeButton->setStyleSheet("QPushButton { background-color: #8B0000; color: white; padding: 8px 16px; font-weight: bold; }");
-    deleteNodeButton->setToolTip("Select a node by clicking on it first");
+    deleteNodeButton->setToolTip("Select a node by clicking on it, then use this button");
     controlLayout->addWidget(deleteNodeButton, row, 0, 1, 3);
     row++;
     
     // Union button
     unionButton = new QPushButton("Union with New Heap", this);
     unionButton->setStyleSheet("QPushButton { background-color: #9370DB; color: white; padding: 8px 16px; font-weight: bold; }");
-    unionButton->setToolTip("Merge current heap with a new heap");
+    unionButton->setToolTip("Merge current heap with a new heap containing random values");
     controlLayout->addWidget(unionButton, row, 0, 1, 3);
     row++;
     
@@ -405,7 +482,7 @@ void MainWindow::setupUI() {
     speedSlider->setMaximumWidth(150);
     animLayout->addWidget(speedSlider);
     
-    QLabel* speedInfo = new QLabel("1=Slow  2=Normal  3=Fast", this);
+    QLabel* speedInfo = new QLabel("1=Slow, 2=Normal, 3=Fast", this);
     animLayout->addWidget(speedInfo);
     
     pauseResumeButton = new QPushButton("Pause", this);
@@ -417,8 +494,8 @@ void MainWindow::setupUI() {
     mainLayout->addWidget(animGroup);
     
     // Canvas for heap visualization
-    canvas = new HeapCanvas(&heap, animationSystem, this);
-    mainLayout->addWidget(canvas, 1);  // Stretch factor 1
+    canvas = new HeapCanvas<T>(&heap, animationSystem, this);
+    mainLayout->addWidget(canvas, 1);  // Stretch factor 1 to take available space
     
     // Legend
     QGroupBox* legendGroup = new QGroupBox("Legend", this);
@@ -438,7 +515,6 @@ void MainWindow::setupUI() {
     addLegendItem("Marked", QColor(255, 140, 0));
     addLegendItem("Regular", QColor(173, 216, 230));
     addLegendItem("Highlighted", QColor(255, 255, 0));
-    addLegendItem("Selected", QColor(255, 0, 0));
     legendLayout->addStretch();
     
     mainLayout->addWidget(legendGroup);
@@ -454,10 +530,11 @@ void MainWindow::setupUI() {
     connect(pauseResumeButton, &QPushButton::clicked, this, &MainWindow::onPauseResumeClicked);
     connect(speedSlider, &QSlider::valueChanged, this, &MainWindow::onSpeedChanged);
     connect(inputField, &QLineEdit::returnPressed, this, &MainWindow::onInsertClicked);
-    connect(canvas, &HeapCanvas::nodeSelected, this, &MainWindow::onNodeSelected);
+    connect(canvas, &HeapCanvas<T>::nodeSelected, this, &MainWindow::onNodeSelected);
 }
 
-void MainWindow::onInsertClicked() {
+template<typename T>
+void MainWindow<T>::onInsertClicked() {
     QString text = inputField->text().trimmed();
     
     if (text.isEmpty()) {
@@ -466,21 +543,32 @@ void MainWindow::onInsertClicked() {
     }
     
     bool ok;
-    int value = text.toInt(&ok);
+    T value = parseInput<T>(text, ok);
     
     if (!ok) {
-        updateStatus("Invalid input - please enter an integer");
+        updateStatus("Invalid input for selected type");
         return;
     }
     
-    heap.insert(value, value);  // Use value as both value and key
-    updateStatus(QString("Inserted: %1").arg(value));
+    // Use value hashcode or convert to int for key
+    int key;
+    if constexpr (std::is_same_v<T, int>) {
+        key = value;
+    } else if constexpr (std::is_same_v<T, char>) {
+        key = static_cast<int>(value);
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        key = static_cast<int>(std::hash<std::string>{}(value) % 10000);
+    }
+    
+    heap.insert(value, key);
+    updateStatus(QString("Inserted: %1 (key=%2)").arg(valueToString(value)).arg(key));
     inputField->clear();
     updateInfo();
     canvas->update();
 }
 
-void MainWindow::onFindMinClicked() {
+template<typename T>
+void MainWindow<T>::onFindMinClicked() {
     if (heap.isEmpty()) {
         updateStatus("Heap is empty");
         return;
@@ -489,11 +577,14 @@ void MainWindow::onFindMinClicked() {
     auto* minNode = heap.getMin();
     if (minNode) {
         canvas->setHighlightedNode(minNode);
-        updateStatus(QString("Minimum value: %1 (highlighted in yellow)").arg(minNode->key));
+        updateStatus(QString("Minimum value: %1 (key=%2)")
+            .arg(valueToString(minNode->value))
+            .arg(minNode->key));
     }
 }
 
-void MainWindow::onExtractMinClicked() {
+template<typename T>
+void MainWindow<T>::onExtractMinClicked() {
     if (heap.isEmpty()) {
         updateStatus("Heap is empty");
         return;
@@ -511,6 +602,7 @@ void MainWindow::onExtractMinClicked() {
     }
     
     int minValue = minNode->key;
+    T minVal = minNode->value;
     
     // Setup animation
     setupAnimationForExtractMin();
@@ -523,11 +615,14 @@ void MainWindow::onExtractMinClicked() {
     animationSystem->play();
     pauseResumeButton->setEnabled(true);
     
-    updateStatus(QString("Extracting min: %1 - Watch the animation!").arg(minValue));
+    updateStatus(QString("Extracting min: %1 (key=%2) - Watch the animation!")
+        .arg(valueToString(minVal))
+        .arg(minValue));
     updateInfo();
 }
 
-void MainWindow::onDecreaseKeyClicked() {
+template<typename T>
+void MainWindow<T>::onDecreaseKeyClicked() {
     auto* selectedNode = canvas->getSelectedNode();
     if (!selectedNode) {
         updateStatus("Please select a node first by clicking on it");
@@ -548,21 +643,22 @@ void MainWindow::onDecreaseKeyClicked() {
     }
     
     // Setup animation
-    setupAnimationForDecreaseKey();
+    setupAnimationForDecreaseKey(selectedNode, newKey);
     
     // Perform actual decrease key
     try {
         heap.decreaseKey(selectedNode, newKey);
         animationSystem->play();
         pauseResumeButton->setEnabled(true);
-        updateStatus(QString("Decreasing key to %1 - Watch for cuts and cascading cuts!").arg(newKey));
+        updateStatus(QString("Decreasing key to %1 - Watch the animation!").arg(newKey));
         updateInfo();
     } catch (const std::exception& e) {
         updateStatus(QString("Error: %1").arg(e.what()));
     }
 }
 
-void MainWindow::onDeleteNodeClicked() {
+template<typename T>
+void MainWindow<T>::onDeleteNodeClicked() {
     auto* selectedNode = canvas->getSelectedNode();
     if (!selectedNode) {
         updateStatus("Please select a node first by clicking on it");
@@ -574,49 +670,64 @@ void MainWindow::onDeleteNodeClicked() {
         return;
     }
     
+    QString val = valueToString(selectedNode->value);
     int key = selectedNode->key;
     
     heap.deleteNode(selectedNode);
     canvas->clearSelection();
-    updateStatus(QString("Deleted node with key %1").arg(key));
+    updateStatus(QString("Deleted node: %1 (key=%2)").arg(val).arg(key));
     updateInfo();
     canvas->update();
 }
 
-void MainWindow::onUnionClicked() {
+template<typename T>
+void MainWindow<T>::onUnionClicked() {
     if (animationSystem->isAnimating()) {
         updateStatus("Animation in progress. Please wait...");
         return;
     }
     
-    // Create a new heap with some values
-    heap2 = FibonacciHeap<int>();
-    heap2.insert(100, 100);
-    heap2.insert(50, 50);
-    heap2.insert(75, 75);
+    // Create a new heap with some random values
+    heap2 = FibonacciHeap<T>();
+    
+    if constexpr (std::is_same_v<T, int>) {
+        heap2.insert(100, 100);
+        heap2.insert(50, 50);
+        heap2.insert(75, 75);
+    } else if constexpr (std::is_same_v<T, char>) {
+        heap2.insert('X', 88);
+        heap2.insert('Y', 89);
+        heap2.insert('Z', 90);
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        heap2.insert(std::string("alpha"), 100);
+        heap2.insert(std::string("beta"), 200);
+        heap2.insert(std::string("gamma"), 150);
+    }
     
     int heap2Size = heap2.getSize();
     heap.merge(heap2);
     
-    updateStatus(QString("Merged with new heap containing %1 nodes (50, 75, 100)").arg(heap2Size));
+    updateStatus(QString("Merged with new heap (%1 nodes)").arg(heap2Size));
     updateInfo();
     canvas->update();
 }
 
-void MainWindow::onResetClicked() {
+template<typename T>
+void MainWindow<T>::onResetClicked() {
     if (animationSystem->isAnimating()) {
         animationSystem->stop();
         pauseResumeButton->setEnabled(false);
     }
     
-    heap = FibonacciHeap<int>();
+    heap = FibonacciHeap<T>();
     canvas->clearSelection();
-    updateStatus("Heap reset - Ready to insert new values");
+    updateStatus("Heap reset");
     updateInfo();
     canvas->update();
 }
 
-void MainWindow::onPauseResumeClicked() {
+template<typename T>
+void MainWindow<T>::onPauseResumeClicked() {
     if (animationSystem->isAnimating()) {
         animationSystem->pause();
         pauseResumeButton->setText("Resume");
@@ -626,36 +737,42 @@ void MainWindow::onPauseResumeClicked() {
     }
 }
 
-void MainWindow::onSpeedChanged(int value) {
+template<typename T>
+void MainWindow<T>::onSpeedChanged(int value) {
     animationSystem->setSpeed(value);
-    updateStatus(QString("Animation speed set to %1").arg(value));
 }
 
-void MainWindow::onAnimationUpdate() {
+template<typename T>
+void MainWindow<T>::onAnimationUpdate() {
     canvas->update();
 }
 
-void MainWindow::onAnimationCompleted() {
+template<typename T>
+void MainWindow<T>::onAnimationCompleted() {
     pauseResumeButton->setEnabled(false);
     pauseResumeButton->setText("Pause");
     canvas->update();
     updateStatus("Animation completed");
 }
 
-void MainWindow::onNodeSelected(FibonacciHeap<int>::Node* node) {
+template<typename T>
+void MainWindow<T>::onNodeSelected(typename FibonacciHeap<T>::Node* node) {
     if (node) {
-        updateStatus(QString("Node selected: key=%1, degree=%2, marked=%3")
+        updateStatus(QString("Node selected: %1 (key=%2, degree=%3, marked=%4)")
+            .arg(valueToString(node->value))
             .arg(node->key)
             .arg(node->degree)
             .arg(node->marked ? "Yes" : "No"));
     }
 }
 
-void MainWindow::updateStatus(const QString& message) {
+template<typename T>
+void MainWindow<T>::updateStatus(const QString& message) {
     statusLabel->setText(message);
 }
 
-void MainWindow::updateInfo() {
+template<typename T>
+void MainWindow<T>::updateInfo() {
     QString info = QString("Heap Size: %1").arg(heap.getSize());
     if (!heap.isEmpty()) {
         info += QString(" | Min Key: %1").arg(heap.getMin()->key);
@@ -663,46 +780,40 @@ void MainWindow::updateInfo() {
     infoLabel->setText(info);
 }
 
-void MainWindow::setupAnimationForExtractMin() {
+template<typename T>
+void MainWindow<T>::setupAnimationForExtractMin() {
     animationSystem->clearSteps();
     
     // Add animation steps for extract min operation
-    // Step 1: Highlight the min node
     AnimationStep step1;
     step1.type = AnimationStep::HIGHLIGHT_NODE;
     step1.nodePtr = heap.getMin();
     step1.duration = 500;
     animationSystem->addStep(step1);
     
-    // Step 2: Show removal
     AnimationStep step2;
     step2.type = AnimationStep::REMOVE_NODE;
     step2.nodePtr = heap.getMin();
     step2.duration = 800;
     animationSystem->addStep(step2);
     
-    // Step 3: Pause to show consolidation
     AnimationStep step3;
     step3.type = AnimationStep::PAUSE;
     step3.duration = 1000;
     animationSystem->addStep(step3);
 }
 
-void MainWindow::setupAnimationForDecreaseKey() {
+template<typename T>
+void MainWindow<T>::setupAnimationForDecreaseKey(typename FibonacciHeap<T>::Node* node, int newKey) {
     animationSystem->clearSteps();
     
-    auto* node = canvas->getSelectedNode();
-    if (!node) return;
-    
     // Add animation steps for decrease key operation
-    // Step 1: Highlight the node
     AnimationStep step1;
     step1.type = AnimationStep::HIGHLIGHT_NODE;
     step1.nodePtr = node;
     step1.duration = 500;
     animationSystem->addStep(step1);
     
-    // Step 2: Show color change (marking)
     AnimationStep step2;
     step2.type = AnimationStep::CHANGE_COLOR;
     step2.nodePtr = node;
@@ -711,9 +822,10 @@ void MainWindow::setupAnimationForDecreaseKey() {
     step2.duration = 800;
     animationSystem->addStep(step2);
     
-    // Step 3: Pause to show cut
     AnimationStep step3;
     step3.type = AnimationStep::PAUSE;
     step3.duration = 1000;
     animationSystem->addStep(step3);
 }
+
+#endif // MAINWINDOW_TPP
