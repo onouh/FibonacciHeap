@@ -16,16 +16,17 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Source files
-set(SOURCES
+# ============================================
+# Main GUI Application (Fibonacci Heap Visualization)
+# ============================================
+set(MAIN_SOURCES
     src/main.cpp
     src/MainWindow.cpp
     src/AnimationSystem.cpp
     src/TypeSelector.cpp
 )
 
-# Header files
-set(HEADERS
+set(MAIN_HEADERS
     include/FibonacciHeap.hpp
     include/MainWindow.h
     include/AnimationSystem.h
@@ -34,16 +35,36 @@ set(HEADERS
     include/HeapWrapper.h
 )
 
-# Create executable
-add_executable(FibonacciHeapGUI ${SOURCES} ${HEADERS})
-
-# Link Qt libraries
+# Create main executable
+add_executable(FibonacciHeapGUI ${MAIN_SOURCES} ${MAIN_HEADERS})
 target_link_libraries(FibonacciHeapGUI Qt6::Widgets)
 
-# Set output directory
-set_target_properties(FibonacciHeapGUI PROPERTIES
+# ============================================
+# TaskManager Application (Emergency Care Management)
+# ============================================
+set(TASKMANAGER_SOURCES
+    application/main.cpp
+    application/AppWindow.cpp
+    application/TaskManager.cpp
+)
+
+set(TASKMANAGER_HEADERS
+    application/AppWindow.h
+    application/TaskManager.h
+    include/FibonacciHeap.hpp
+)
+
+# Create TaskManager executable
+add_executable(TaskManagerGUI ${TASKMANAGER_SOURCES} ${TASKMANAGER_HEADERS})
+target_include_directories(TaskManagerGUI PRIVATE ${CMAKE_SOURCE_DIR}/application)
+target_link_libraries(TaskManagerGUI Qt6::Widgets)
+
+# ============================================
+# Output directories
+# ============================================
+set_target_properties(FibonacciHeapGUI TaskManagerGUI PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
 # Installation rules
-install(TARGETS FibonacciHeapGUI DESTINATION bin)
+install(TARGETS FibonacciHeapGUI TaskManagerGUI DESTINATION bin)
