@@ -1,330 +1,70 @@
-#include <vector>
-#include <string>
-#include <iostream>
-#include <cmath>
-#include <sstream>
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
-
 #include "MainWindow.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QMessageBox>
+#include <QPen>
+#include <QBrush>
+#include <QFont>
+#include <cmath>
+#include <algorithm>
 
-// Define constants for UI dimensions
-constexpr float INPUT_BOX_WIDTH = 200.0f;
-constexpr float INPUT_BOX_HEIGHT = 30.0f;
-constexpr float BUTTON_WIDTH = 120.0f;
-constexpr float BUTTON_HEIGHT = 40.0f;
-
-MainWindow::MainWindow() : 
-    window(sf::VideoMode(1200, 800), "Fibonacci Heap Visualization"),
-    isTyping(false) {
-
-    // Initialize font
-    if (!font.loadFromFile("/System/Library/Fonts/Helvetica.ttc")) {
-        std::cerr << "Error: Could not load font." << std::endl;
-    }
-
-    // Initialize title text
-    titleText.setFont(font);
-    titleText.setString("Fibonacci Heap Visualization");
-    titleText.setCharacterSize(28);
-    titleText.setFillColor(sf::Color::Black);
-    titleText.setPosition(20, 10);
+// UI Constants
+namespace {
+    constexpr int TITLE_FONT_SIZE = 18;
+    constexpr int EMPTY_HEAP_FONT_SIZE = 16;
+    constexpr int NODE_TEXT_FONT_SIZE = 12;
 }
 
-void MainWindow::initializeUI() {
-    // Instructions
-    instructionsText.setFont(font);
-    instructionsText.setString("Enter a number and click Insert. Click Extract Min to remove minimum.");
-    instructionsText.setCharacterSize(14);
-    instructionsText.setFillColor(sf::Color(60, 60, 60));
-    instructionsText.setPosition(20, 50);
-    
-    // Status text
-    statusText.setFont(font);
-    statusText.setString("Ready");
-    statusText.setCharacterSize(14);
-    statusText.setFillColor(sf::Color(0, 128, 0));
-    statusText.setPosition(20, 75);
-    
-    // Input box
-    inputBox.setSize(sf::Vector2f(INPUT_BOX_WIDTH, INPUT_BOX_HEIGHT));
-    inputBox.setPosition(20, 110);
-    inputBox.setFillColor(sf::Color::White);
-    inputBox.setOutlineColor(sf::Color::Black);
-    inputBox.setOutlineThickness(2);
-    
-    inputText.setFont(font);
-    inputText.setString("");
-    inputText.setCharacterSize(20);
-    inputText.setFillColor(sf::Color::Black);
-    inputText.setPosition(30, 120);
-    
-    // Insert button
-    insertButton.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
-    insertButton.setPosition(140, 110);
-    insertButton.setFillColor(sf::Color(70, 130, 180));
-    
-    insertButtonText.setFont(font);
-    insertButtonText.setString("Insert");
-    insertButtonText.setCharacterSize(18);
-    insertButtonText.setFillColor(sf::Color::White);
-    insertButtonText.setPosition(170, 120);
-    
-    // Extract Min button
-    extractMinButton.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
-    extractMinButton.setPosition(280, 110);
-    extractMinButton.setFillColor(sf::Color(220, 20, 60));
-    
-    extractMinButtonText.setFont(font);
-    extractMinButtonText.setString("Extract Min");
-    extractMinButtonText.setCharacterSize(18);
-    extractMinButtonText.setFillColor(sf::Color::White);
-    extractMinButtonText.setPosition(295, 120);
-    
-    // Reset button
-    resetButton.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
-    resetButton.setPosition(420, 110);
-    resetButton.setFillColor(sf::Color(128, 128, 128));
-    
-    resetButtonText.setFont(font);
-    resetButtonText.setString("Reset");
-    resetButtonText.setCharacterSize(18);
-    resetButtonText.setFillColor(sf::Color::White);
-    resetButtonText.setPosition(455, 120);
+// HeapCanvas Implementation
+
+/**
+ * Constructor for HeapCanvas
+ * @param h Pointer to the FibonacciHeap to visualize
+ * @param parent Parent widget (optional)
+ * 
+ * Sets minimum size to 1200x600 to ensure adequate space for heap visualization.
+ * The canvas uses an expanding size policy to fill available space.
+ */
+HeapCanvas::HeapCanvas(FibonacciHeap<int>* h, QWidget* parent)
+    : QWidget(parent), heap(h) {
+    setMinimumSize(1200, 600);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
-void MainWindow::run() {
-    while (window.isOpen()) {
-        handleEvents();
-        render();
-    }
-}
-
-void MainWindow::handleEvents() {
-    sf::Event event;
-    while (window.pollEvent(event)) {
-        if (event.type == sf::Event::Closed) {
-            window.close();
-        }
-        else if (event.type == sf::Event::MouseButtonPressed) {
-            if (event.mouseButton.button == sf::Mouse::Left) {
-                sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
-                handleMouseClick(mousePos);
-            }
-        }
-        else if (event.type == sf::Event::TextEntered) {
-            if (isTyping) {
-                handleTextInput(event.text.unicode);
-            }
-        }
-        else if (event.type == sf::Event::KeyPressed) {
-            if (event.key.code == sf::Keyboard::Enter && isTyping) {
-                insertValue();
-            }
-        }
-    }
-}
-
-void MainWindow::handleMouseClick(const sf::Vector2f& mousePos) {
-    // Check if input box was clicked
-    if (inputBox.getGlobalBounds().contains(mousePos)) {
-        isTyping = true;
-        inputBox.setOutlineColor(sf::Color::Blue);
-    } else {
-        isTyping = false;
-        inputBox.setOutlineColor(sf::Color::Black);
-    }
+void HeapCanvas::paintEvent(QPaintEvent* event) {
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
     
-    // Check button clicks
-    if (isButtonClicked(insertButton, mousePos)) {
-        insertValue();
-    }
-    else if (isButtonClicked(extractMinButton, mousePos)) {
-        extractMinValue();
-    }
-    else if (isButtonClicked(resetButton, mousePos)) {
-        resetHeap();
-    }
-}
-
-void MainWindow::handleTextInput(sf::Uint32 unicode) {
-    if (unicode == 8) { // Backspace
-        if (!inputValue.empty()) {
-            inputValue.pop_back();
-        }
-    }
-    else if (unicode >= 48 && unicode <= 57) { // Numbers 0-9
-        if (inputValue.length() < 6) {
-            inputValue += static_cast<char>(unicode);
-        }
-    }
-    else if (unicode == 45 && inputValue.empty()) { // Minus sign (only at start)
-        inputValue += '-';
-    }
+    // Background
+    painter.fillRect(rect(), QColor(240, 240, 240));
     
-    inputText.setString(inputValue);
-}
-
-bool MainWindow::isButtonClicked(const sf::RectangleShape& button, const sf::Vector2f& mousePos) {
-    return button.getGlobalBounds().contains(mousePos);
-}
-
-void MainWindow::insertValue() {
-    if (inputValue.empty()) {
-        updateStatus("Please enter a value");
-        return;
-    }
-    
-    try {
-        int value = std::stoi(inputValue);
-        heap.insert(value, value);
-        updateStatus("Inserted: " + inputValue);
-        inputValue.clear();
-        inputText.setString("");
-    }
-    catch (const std::exception& e) {
-        updateStatus("Invalid input");
-    }
-}
-
-void MainWindow::extractMinValue() {
-    if (heap.isEmpty()) {
-        updateStatus("Heap is empty");
-        return;
-    }
-    
-    try {
-        FibonacciHeap<int>::Node* minNode = heap.getMin();
-        int minValue = minNode->key;
-        FibonacciHeap<int>::Node* extracted = heap.extractMin();
-        delete extracted;  // Free the extracted node
-        updateStatus("Extracted min: " + std::to_string(minValue));
-    }
-    catch (const std::exception& e) {
-        updateStatus("Error extracting min");
-    }
-}
-
-void MainWindow::resetHeap() {
-    // Clear the heap by creating a new one
-    heap = FibonacciHeap<int>();
-    nodePositions.clear();
-    updateStatus("Heap reset");
-}
-
-void MainWindow::updateStatus(const std::string& message) {
-    statusText.setString(message);
-}
-
-void MainWindow::render() {
-    window.clear(sf::Color(240, 240, 240));
-    
-    // Draw UI elements
-    window.draw(titleText);
-    window.draw(instructionsText);
-    window.draw(statusText);
-    
-    window.draw(inputBox);
-    window.draw(inputText);
-    
-    window.draw(insertButton);
-    window.draw(insertButtonText);
-    
-    window.draw(extractMinButton);
-    window.draw(extractMinButtonText);
-    
-    window.draw(resetButton);
-    window.draw(resetButtonText);
-    
-    // Draw heap visualization
-    drawHeap();
-    
-    window.display();
-}
-
-void MainWindow::drawHeap() {
-    if (heap.isEmpty()) {
-        sf::Text emptyText;
-        emptyText.setFont(font);
-        emptyText.setString("Heap is empty");
-        emptyText.setCharacterSize(20);
-        emptyText.setFillColor(sf::Color(128, 128, 128));
-        emptyText.setPosition(500, 400);
-        window.draw(emptyText);
+    if (heap->isEmpty()) {
+        painter.setPen(Qt::gray);
+        QFont font = painter.font();
+        font.setPointSize(EMPTY_HEAP_FONT_SIZE);
+        painter.setFont(font);
+        painter.drawText(rect(), Qt::AlignCenter, "Heap is empty");
         return;
     }
     
     calculateNodePositions();
-    
-    // Draw connections first (so they appear behind nodes)
-    for (const auto& [node, pos] : nodePositions) {
-        if (node->child) {
-            // Draw lines to children
-            FibonacciHeap<int>::Node* child = node->child;
-            FibonacciHeap<int>::Node* start = child;
-            do {
-                FibonacciHeap<int>::Node* next = child->right;
-                if (nodePositions.find(child) != nodePositions.end()) {
-                    sf::Vector2f childPos = nodePositions[child];
-                    sf::Vertex line[] = {
-                        sf::Vertex(sf::Vector2f(pos.x, pos.y), sf::Color::Black),
-                        sf::Vertex(sf::Vector2f(childPos.x, childPos.y), sf::Color::Black)
-                    };
-                    window.draw(line, 2, sf::Lines);
-                }
-                child = next;
-            } while (child != start);
-        }
-    }
+    drawConnections(painter);
     
     // Draw nodes
     for (const auto& [node, pos] : nodePositions) {
-        drawNode(node, pos.x, pos.y, node->parent == nullptr);
+        drawNode(painter, node, pos.x(), pos.y(), node->parent == nullptr);
     }
 }
 
-void MainWindow::drawNode(FibonacciHeap<int>::Node* node, float x, float y, bool isRoot) {
-    // Draw circle
-    sf::CircleShape circle(NODE_RADIUS);
-    circle.setPosition(x - NODE_RADIUS, y - NODE_RADIUS);
-    
-    // Color based on node properties
-    if (node == heap.getMin()) {
-        circle.setFillColor(sf::Color(255, 215, 0)); // Gold for minimum
-    } else if (node->marked) {
-        circle.setFillColor(sf::Color(255, 140, 0)); // Orange for marked
-    } else if (isRoot) {
-        circle.setFillColor(sf::Color(144, 238, 144)); // Light green for roots
-    } else {
-        circle.setFillColor(sf::Color(173, 216, 230)); // Light blue for other nodes
-    }
-    
-    circle.setOutlineColor(sf::Color::Black);
-    circle.setOutlineThickness(2);
-    window.draw(circle);
-    
-    // Draw key value
-    sf::Text keyText;
-    keyText.setFont(font);
-    keyText.setString(std::to_string(node->key));
-    keyText.setCharacterSize(16);
-    keyText.setFillColor(sf::Color::Black);
-    
-    // Center text in circle
-    sf::FloatRect textBounds = keyText.getLocalBounds();
-    keyText.setPosition(x - textBounds.width / 2, y - textBounds.height / 2 - 5);
-    window.draw(keyText);
-}
-
-void MainWindow::calculateNodePositions() {
+void HeapCanvas::calculateNodePositions() {
     nodePositions.clear();
     
-    if (heap.isEmpty()) return;
+    if (heap->isEmpty()) return;
     
-    std::vector<FibonacciHeap<int>::Node*> roots = heap.getRootList();
+    std::vector<FibonacciNode<int>*> roots = heap->getRootList();
     
     float startX = 100;
-    float startY = 250;
+    float startY = 100;
     float currentX = startX;
     
     for (auto root : roots) {
@@ -334,16 +74,16 @@ void MainWindow::calculateNodePositions() {
     }
 }
 
-void MainWindow::positionSubtree(FibonacciHeap<int>::Node* node, float x, float y, float& maxX) {
+void HeapCanvas::positionSubtree(FibonacciNode<int>* node, float x, float y, float& maxX) {
     if (!node) return;
     
-    nodePositions[node] = sf::Vector2f(x, y);
+    nodePositions[node] = QPointF(x, y);
     maxX = std::max(maxX, x);
     
     // Position children
     if (node->child) {
-        FibonacciHeap<int>::Node* child = node->child;
-        FibonacciHeap<int>::Node* start = child;
+        FibonacciNode<int>* child = node->child;
+        FibonacciNode<int>* start = child;
         float childX = x - (node->degree - 1) * HORIZONTAL_SPACING / 2.0f;
         
         do {
@@ -352,4 +92,179 @@ void MainWindow::positionSubtree(FibonacciHeap<int>::Node* node, float x, float 
             child = child->right;
         } while (child != start);
     }
+}
+
+void HeapCanvas::drawConnections(QPainter& painter) {
+    QPen pen(Qt::black, 2);
+    painter.setPen(pen);
+    
+    for (const auto& [node, pos] : nodePositions) {
+        if (node->child) {
+            // Draw lines to children
+            FibonacciHeap<int>::Node* child = node->child;
+            FibonacciHeap<int>::Node* start = child;
+            do {
+                FibonacciHeap<int>::Node* next = child->right;
+                if (nodePositions.find(child) != nodePositions.end()) {
+                    QPointF childPos = nodePositions[child];
+                    painter.drawLine(pos, childPos);
+                }
+                child = next;
+            } while (child != start);
+        }
+    }
+}
+
+void HeapCanvas::drawNode(QPainter& painter, FibonacciNode<int>* node, float x, float y, bool isRoot) {
+    // Determine node color
+    QColor fillColor;
+    if (node == heap->getMinNode()) {
+        fillColor = QColor(255, 215, 0); // Gold for minimum
+    } else if (node->marked) {
+        fillColor = QColor(255, 140, 0); // Orange for marked
+    } else if (isRoot) {
+        fillColor = QColor(144, 238, 144); // Light green for roots
+    } else {
+        fillColor = QColor(173, 216, 230); // Light blue for other nodes
+    }
+    
+    // Draw circle
+    painter.setPen(QPen(Qt::black, 2));
+    painter.setBrush(QBrush(fillColor));
+    painter.drawEllipse(QPointF(x, y), NODE_RADIUS, NODE_RADIUS);
+    
+    // Draw key value
+    painter.setPen(Qt::black);
+    QFont font = painter.font();
+    font.setPointSize(NODE_TEXT_FONT_SIZE);
+    font.setBold(true);
+    painter.setFont(font);
+    
+    QString text = QString::number(node->key);
+    QRectF textRect(x - NODE_RADIUS, y - NODE_RADIUS, NODE_RADIUS * 2, NODE_RADIUS * 2);
+    painter.drawText(textRect, Qt::AlignCenter, text);
+}
+
+// MainWindow Implementation
+MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+    setupUI();
+    setWindowTitle("Fibonacci Heap Visualization");
+    resize(1200, 800);
+}
+
+MainWindow::~MainWindow() = default;
+
+void MainWindow::setupUI() {
+    // Create central widget
+    QWidget* centralWidget = new QWidget(this);
+    setCentralWidget(centralWidget);
+    
+    // Main layout
+    QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
+    
+    // Title label
+    QLabel* titleLabel = new QLabel("Fibonacci Heap Visualization", this);
+    QFont titleFont = titleLabel->font();
+    titleFont.setPointSize(TITLE_FONT_SIZE);
+    titleFont.setBold(true);
+    titleLabel->setFont(titleFont);
+    mainLayout->addWidget(titleLabel);
+    
+    // Instructions label
+    QLabel* instructionsLabel = new QLabel(
+        "Enter a number and click Insert. Click Extract Min to remove minimum.", this);
+    mainLayout->addWidget(instructionsLabel);
+    
+    // Status label
+    statusLabel = new QLabel("Ready", this);
+    statusLabel->setStyleSheet("QLabel { color: green; }");
+    mainLayout->addWidget(statusLabel);
+    
+    // Control panel
+    QHBoxLayout* controlLayout = new QHBoxLayout();
+    
+    // Input field
+    inputField = new QLineEdit(this);
+    inputField->setPlaceholderText("Enter number");
+    inputField->setMaxLength(10);
+    inputField->setFixedWidth(150);
+    controlLayout->addWidget(inputField);
+    
+    // Insert button
+    insertButton = new QPushButton("Insert", this);
+    insertButton->setStyleSheet("QPushButton { background-color: #4682B4; color: white; padding: 8px 16px; }");
+    controlLayout->addWidget(insertButton);
+    
+    // Extract Min button
+    extractMinButton = new QPushButton("Extract Min", this);
+    extractMinButton->setStyleSheet("QPushButton { background-color: #DC143C; color: white; padding: 8px 16px; }");
+    controlLayout->addWidget(extractMinButton);
+    
+    // Reset button
+    resetButton = new QPushButton("Reset", this);
+    resetButton->setStyleSheet("QPushButton { background-color: #808080; color: white; padding: 8px 16px; }");
+    controlLayout->addWidget(resetButton);
+    
+    controlLayout->addStretch();
+    mainLayout->addLayout(controlLayout);
+    
+    // Canvas for heap visualization
+    canvas = new HeapCanvas(&heap, this);
+    mainLayout->addWidget(canvas);
+    
+    // Connect signals and slots
+    connect(insertButton, &QPushButton::clicked, this, &MainWindow::onInsertClicked);
+    connect(extractMinButton, &QPushButton::clicked, this, &MainWindow::onExtractMinClicked);
+    connect(resetButton, &QPushButton::clicked, this, &MainWindow::onResetClicked);
+    connect(inputField, &QLineEdit::returnPressed, this, &MainWindow::onInsertClicked);
+}
+
+void MainWindow::onInsertClicked() {
+    QString text = inputField->text().trimmed();
+    
+    if (text.isEmpty()) {
+        updateStatus("Please enter a value");
+        return;
+    }
+    
+    bool ok;
+    int value = text.toInt(&ok);
+    
+    if (!ok) {
+        updateStatus("Invalid input");
+        return;
+    }
+    
+    heap.insert(value);
+    updateStatus(QString("Inserted: %1").arg(value));
+    inputField->clear();
+    canvas->update();
+}
+
+void MainWindow::onExtractMinClicked() {
+    if (heap.isEmpty()) {
+        updateStatus("Heap is empty");
+        return;
+    }
+    
+    try {
+        int minValue = heap.getMin();
+        FibonacciNode<int>* extracted = heap.extractMin();
+        delete extracted;  // Free the extracted node
+        updateStatus(QString("Extracted min: %1").arg(minValue));
+        canvas->update();
+    }
+    catch (const std::exception& e) {
+        updateStatus("Error extracting min");
+    }
+}
+
+void MainWindow::onResetClicked() {
+    heap = FibonacciHeap<int>();
+    updateStatus("Heap reset");
+    canvas->update();
+}
+
+void MainWindow::updateStatus(const QString& message) {
+    statusLabel->setText(message);
 }

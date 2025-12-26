@@ -29,9 +29,9 @@ This project provides a complete, production-ready implementation of a Fibonacci
 **Files**: `include/MainWindow.h`, `src/MainWindow.cpp`, `src/main.cpp`
 
 #### Features:
-- Built with SFML (Simple and Fast Multimedia Library)
-- Interactive input field for entering values
-- Three action buttons: Insert, Extract Min, Reset
+- Built with Qt 6 (Widgets module)
+- Interactive input field for entering values (QLineEdit)
+- Three action buttons: Insert, Extract Min, Reset (QPushButton)
 - Real-time visualization of heap structure
 - Color-coded nodes:
   - Gold: Minimum node
@@ -39,19 +39,23 @@ This project provides a complete, production-ready implementation of a Fibonacci
   - Orange: Marked nodes (cascading cuts)
   - Light Blue: Regular nodes
 - Visual representation of parent-child relationships with connecting lines
-- Status messages for user feedback
+- Status messages for user feedback (QLabel)
 
 #### Technical Highlights:
-- Cross-platform font loading (Windows, macOS, Linux)
+- Native Qt widgets for platform-native look and feel
+- Signal-slot mechanism for event handling
+- Custom HeapCanvas widget with paintEvent override
 - Efficient node positioning algorithm
 - Automatic layout of forest structure (multiple trees)
+- Qt's automatic memory management via object hierarchy
 - Proper memory management (no leaks)
 
 ### 3. Build System
 **File**: `CMakeLists.txt`
 
 - CMake-based build configuration
-- Automatic SFML library detection and linking
+- Automatic Qt 6 library detection and linking
+- Qt automation (AUTOMOC, AUTORCC, AUTOUIC)
 - Cross-platform support (Linux, macOS, Windows)
 - Organized output directory structure
 
@@ -88,7 +92,7 @@ This project provides a complete, production-ready implementation of a Fibonacci
 - Removed unused function declarations
 - Fixed potential buffer overflow in consolidate operation
 - Fixed memory leak in GUI extract min operation
-- Implemented cross-platform font loading
+- Migrated from SFML to Qt 6 for better cross-platform support
 
 ### Security Analysis
 ✅ CodeQL scan completed: **0 vulnerabilities found**
@@ -196,11 +200,11 @@ Implemented as part of a Data Structures Course final project.
 
 **Technologies Used**:
 - C++17
-- SFML 2.5+
+- Qt 6 (Widgets module)
 - CMake 3.16+
 - Git version control
 
 **Standards Compliance**:
 - ISO C++17
-- SFML 2.x API
+- Qt 6 API
 - CMake modern practices

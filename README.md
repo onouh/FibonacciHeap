@@ -17,7 +17,7 @@ This repository contains a complete C++ implementation of a Fibonacci Heap data 
 - **Cascading cut logic** for maintaining heap properties
 
 ### Frontend (GUI)
-- Built with **SFML** (Simple and Fast Multimedia Library)
+- Built with **Qt 6** (Widgets module)
 - **Interactive controls**:
   - Input field for entering values
   - Insert button to add values to the heap
@@ -52,7 +52,7 @@ FibonacciHeap/
 
 - **C++17** or newer
 - **CMake** 3.16 or newer
-- **SFML** 2.5 or newer
+- **Qt 6** (Widgets module)
 - **g++** or compatible C++ compiler
 
 ## Building the Project
@@ -61,7 +61,7 @@ FibonacciHeap/
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential cmake libsfml-dev
+sudo apt-get install -y build-essential cmake qt6-base-dev
 ```
 
 ### Build Instructions

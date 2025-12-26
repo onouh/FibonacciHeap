@@ -1,32 +1,25 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <SFML/Graphics.hpp>
-#include <string>
+#include <QMainWindow>
+#include <QWidget>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QLabel>
+#include <QPainter>
+#include <QPoint>
 #include <map>
 #include "FibonacciHeap.hpp"
 
 /**
- * Main window class for Fibonacci Heap visualization
- * Handles rendering and user interaction
+ * Canvas widget for drawing the Fibonacci Heap
  */
-class MainWindow {
+class HeapCanvas : public QWidget {
+    Q_OBJECT
+    
 private:
-    sf::RenderWindow window;
-    FibonacciHeap<int> heap;
-    
-    // UI Elements
-    sf::Font font;
-    sf::RectangleShape insertButton;
-    sf::RectangleShape extractMinButton;
-    sf::RectangleShape resetButton;
-    sf::Text insertButtonText;
-    sf::Text extractMinButtonText;
-    sf::Text resetButtonText;
-    sf::Text titleText;
-    sf::Text instructionsText;
-    sf::Text statusText;
-    
+    FibonacciHeap<int>* heap;
+    std::map<FibonacciNode<int>*, QPointF> nodePositions;
     // Input state
     std::string inputValue;
     bool isTyping;
@@ -40,30 +33,48 @@ private:
     static constexpr float NODE_RADIUS = 25.0f;
     static constexpr float HORIZONTAL_SPACING = 100.0f;
     static constexpr float VERTICAL_SPACING = 80.0f;
-    static constexpr int BUTTON_WIDTH = 120;
-    static constexpr int BUTTON_HEIGHT = 40;
-    static constexpr int INPUT_BOX_WIDTH = 100;
-    static constexpr int INPUT_BOX_HEIGHT = 40;
     
-    // Helper functions
-    void initializeUI();
-    void handleEvents();
-    void handleMouseClick(const sf::Vector2f& mousePos);
-    void handleTextInput(sf::Uint32 unicode);
-    void render();
-    void drawHeap();
-    void drawNode(FibonacciHeap<int>::Node* node, float x, float y, bool isRoot = false);
     void calculateNodePositions();
-    void positionSubtree(FibonacciHeap<int>::Node* node, float x, float y, float& maxX);
-    bool isButtonClicked(const sf::RectangleShape& button, const sf::Vector2f& mousePos);
-    void insertValue();
-    void extractMinValue();
-    void resetHeap();
-    void updateStatus(const std::string& message);
+    void positionSubtree(FibonacciNode<int>* node, float x, float y, float& maxX);
+    void drawNode(QPainter& painter, FibonacciNode<int>* node, float x, float y, bool isRoot);
+    void drawConnections(QPainter& painter);
+    
+protected:
+    void paintEvent(QPaintEvent* event) override;
     
 public:
-    MainWindow();
-    void run();
+    explicit HeapCanvas(FibonacciHeap<int>* h, QWidget* parent = nullptr);
+};
+
+/**
+ * Main window class for Fibonacci Heap visualization
+ * Handles rendering and user interaction
+ */
+class MainWindow : public QMainWindow {
+    Q_OBJECT
+    
+private:
+    FibonacciHeap<int> heap;
+    
+    // UI Elements
+    QLineEdit* inputField;
+    QPushButton* insertButton;
+    QPushButton* extractMinButton;
+    QPushButton* resetButton;
+    QLabel* statusLabel;
+    HeapCanvas* canvas;
+    
+    void setupUI();
+    void updateStatus(const QString& message);
+    
+private slots:
+    void onInsertClicked();
+    void onExtractMinClicked();
+    void onResetClicked();
+    
+public:
+    MainWindow(QWidget* parent = nullptr);
+    ~MainWindow();
 };
 
 #endif // MAINWINDOW_H

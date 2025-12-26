@@ -22,6 +22,7 @@ demo_test
 advanced_example
 examples/basic_test
 examples/advanced_test
+test_heap_operations
 
 # Test scripts
 test_gui.sh
