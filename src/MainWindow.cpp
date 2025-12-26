@@ -101,14 +101,15 @@ void HeapCanvas::drawConnections(QPainter& painter) {
     for (const auto& [node, pos] : nodePositions) {
         if (node->child) {
             // Draw lines to children
-            FibonacciNode<int>* child = node->child;
-            FibonacciNode<int>* start = child;
+            FibonacciHeap<int>::Node* child = node->child;
+            FibonacciHeap<int>::Node* start = child;
             do {
+                FibonacciHeap<int>::Node* next = child->right;
                 if (nodePositions.find(child) != nodePositions.end()) {
                     QPointF childPos = nodePositions[child];
                     painter.drawLine(pos, childPos);
                 }
-                child = child->right;
+                child = next;
             } while (child != start);
         }
     }

@@ -9,7 +9,7 @@
 #include <QPainter>
 #include <QPoint>
 #include <map>
-#include "FibonacciHeap.h"
+#include "FibonacciHeap.hpp"
 
 /**
  * Canvas widget for drawing the Fibonacci Heap
@@ -20,6 +20,14 @@ class HeapCanvas : public QWidget {
 private:
     FibonacciHeap<int>* heap;
     std::map<FibonacciNode<int>*, QPointF> nodePositions;
+    // Input state
+    std::string inputValue;
+    bool isTyping;
+    sf::RectangleShape inputBox;
+    sf::Text inputText;
+    
+    // Node positions for visualization (keyed by heap Node*)
+    std::map<FibonacciHeap<int>::Node*, sf::Vector2f> nodePositions;
     
     // Constants
     static constexpr float NODE_RADIUS = 25.0f;

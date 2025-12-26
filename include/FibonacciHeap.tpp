@@ -1,337 +1,226 @@
-#ifndef FIBONACCIHEAP_TPP
-#define FIBONACCIHEAP_TPP
+#ifndef FIBONACCI_HEAP_TPP
+#define FIBONACCI_HEAP_TPP
 
+#include "FibonacciHeap.hpp"
+#include <iostream>
+#include <vector>
 #include <cmath>
-#include <limits>
-#include <stdexcept>
+using namespace std;
 
-template<typename T>
-FibonacciHeap<T>::FibonacciHeap() : minNode(nullptr), numNodes(0) {}
+//constructor
+template <typename T>
+FibonacciHeap<T>::FibonacciHeap() : minNode(nullptr), size(0) {}
 
-template<typename T>
+//destructor
+template <typename T>
 FibonacciHeap<T>::~FibonacciHeap() {
-    if (minNode) {
-        // Destroy all nodes starting from root list
-        std::vector<FibonacciNode<T>*> roots = getRootList();
-        for (auto root : roots) {
-            destroyNode(root);
-        }
-    }
+    deleteAll(minNode);
 }
 
-template<typename T>
-void FibonacciHeap<T>::destroyNode(FibonacciNode<T>* node) {
-    if (!node) return;
-    
-    // Recursively destroy children
-    if (node->child) {
-        FibonacciNode<T>* child = node->child;
-        FibonacciNode<T>* start = child;
-        do {
-            FibonacciNode<T>* next = child->right;
-            destroyNode(child);
-            child = next;
-        } while (child != start);
-    }
-    
-    delete node;
+//insertBefore()
+template <typename T>
+void FibonacciHeap<T>::insertBefore(Node* node, Node* target) {
+    if (!node || !target) return;
+    node->right = target;
+    node->left = target->left;
+    target->left->right = node;
+    target->left = node;
 }
 
-template<typename T>
-FibonacciNode<T>* FibonacciHeap<T>::insert(T key) {
-    FibonacciNode<T>* node = new FibonacciNode<T>(key);
-    
+//deleteAll() 
+template <typename T>
+void FibonacciHeap<T>::deleteAll(Node* start) {
+    if (!start) return;
+    Node* curr = start;
+    do {
+        Node* next = curr->right;
+        if (curr->child)
+            deleteAll(curr->child);
+        delete curr;
+        curr = next;
+    } while (curr != start);
+}
+
+//insert
+template <typename T>
+typename FibonacciHeap<T>::Node* FibonacciHeap<T>::insert(const T& value, int key) {
+    Node* node = new Node(value, key);
     if (!minNode) {
         minNode = node;
     } else {
-        // Add to root list
-        node->left = minNode;
-        node->right = minNode->right;
-        minNode->right->left = node;
-        minNode->right = node;
-        
-        // Update min if necessary
-        if (key < minNode->key) {
+        insertBefore(node, minNode);
+        if (node->key < minNode->key)
             minNode = node;
-        }
     }
-    
-    numNodes++;
+    size++;
     return node;
 }
 
-template<typename T>
-T FibonacciHeap<T>::getMin() const {
-    if (!minNode) {
-        throw std::runtime_error("Heap is empty");
-    }
-    return minNode->key;
-}
+//getMin()
+template <typename T>
+typename FibonacciHeap<T>::Node* FibonacciHeap<T>::getMin() const { return minNode; }
 
-template<typename T>
-void FibonacciHeap<T>::link(FibonacciNode<T>* y, FibonacciNode<T>* x) {
-    // Remove y from root list
-    y->left->right = y->right;
-    y->right->left = y->left;
-    
-    // Make y a child of x
-    y->parent = x;
-    
-    if (!x->child) {
-        x->child = y;
-        y->left = y;
-        y->right = y;
+//isEmpty()
+template <typename T>
+bool FibonacciHeap<T>::isEmpty() const { return minNode == nullptr; }
+
+//getSize
+template <typename T>
+int FibonacciHeap<T>::getSize() const { return size; }
+
+//displayMin
+template <typename T>
+void FibonacciHeap<T>::displayMin() const {
+    if (isEmpty()) {
+        cout << "Heap is empty\n";
     } else {
-        y->left = x->child;
-        y->right = x->child->right;
-        x->child->right->left = y;
-        x->child->right = y;
+        cout << "Min Node Value: " << minNode->value
+                  << " (Priority = " << minNode->key << ")\n";
     }
-    
-    x->degree++;
-    y->marked = false;
 }
 
-template<typename T>
-void FibonacciHeap<T>::consolidate() {
-    if (!minNode) return;
+//merge()
+template <typename T>
+void FibonacciHeap<T>::merge(FibonacciHeap& otherHeap){
+    if(this == &otherHeap || !otherHeap.minNode) return;
+    if(!minNode) minNode = otherHeap.minNode;
     
-    // Calculate max degree
-    int maxDegree = static_cast<int>(std::log2(numNodes)) + 1;
-    std::vector<FibonacciNode<T>*> degreeTable(maxDegree + 1, nullptr);
-    
-    // Get all root nodes
-    std::vector<FibonacciNode<T>*> rootList;
-    FibonacciNode<T>* current = minNode;
-    FibonacciNode<T>* start = minNode;
-    do {
-        rootList.push_back(current);
-        current = current->right;
-    } while (current != start);
-    
-    // Process each root
-    for (auto w : rootList) {
-        FibonacciNode<T>* x = w;
-        int d = x->degree;
-        
-        while (d < degreeTable.size() && degreeTable[d] != nullptr) {
-            FibonacciNode<T>* y = degreeTable[d];
-            
-            if (x->key > y->key) {
-                std::swap(x, y);
+    else{
+        //split the two circular lists
+        Node* thisTemp = minNode->right;
+        Node* otherTemp = otherHeap.minNode->left;
+        //connect the 2 chains
+        thisTemp->left = otherTemp;
+        otherTemp->right = thisTemp;
+        //connect the 2 minNodes
+        minNode->right = otherHeap.minNode;
+        otherHeap.minNode->left = minNode;  
+    }
+    if(minNode->key > otherHeap.minNode->key) minNode = otherHeap.minNode;
+    size+= otherHeap.size;
+    otherHeap.minNode = nullptr;
+    otherHeap.size = 0;
+}
+
+//linkNodes()
+//this function simply links two nodes, assuming same degrees,
+//a->priority (parent) < b->priority (child), //opp!!
+//minNode change are handled outside (in consolidate)
+template <typename T>
+void FibonacciHeap<T>:: linkNodes(Node*a, Node*b){
+    if(!a || !b) return;
+    //here b is disconnected from the node list
+    b->left->right = b->right;
+    b->right->left = b->left;
+    //here b is inserted as a child of a
+
+    //case: a has no children
+    if(!a->child){  
+        a->child = b;
+        b->left = b;
+        b->right = b;
+    }
+    //case: a has children  
+    else{insertBefore(b, a->child);}
+    b->parent = a;
+    a->degree++;
+    b->marked = false; 
+}
+
+//consolidate
+template <typename T>
+void FibonacciHeap<T>::consolidate(){
+    if(!minNode) return;
+    int maxDegree = static_cast<int>(log2(size) / log2(1.618)) + 1;
+    vector<Node*> degreeArray(maxDegree + 1, nullptr);
+    //we store the roots in the rootlist
+    vector<Node*> rootlist;
+    Node*curr=minNode;
+    Node* start=minNode;
+    do{
+        rootlist.push_back(curr);
+        curr=curr->right;
+
+    }while(curr!=start);
+    //trees with the same degree are merged
+    for(Node* r : rootlist){
+        Node* p = r;
+        int d = r->degree; 
+        while(d < degreeArray.size() && degreeArray[d] != nullptr){
+            Node* c = degreeArray[d];
+            //swap if p's value > c's to ensure p is always the parent
+            if(p->key > c->key){
+               Node* temp = p;
+               p = c;
+               c = temp;
             }
-            
-            link(y, x);
-            degreeTable[d] = nullptr;
+            linkNodes(p,c);
+            degreeArray[d] = nullptr; //c's previous place
             d++;
-            
-            // Expand degree table if needed
-            if (d >= degreeTable.size()) {
-                degreeTable.resize(d + 1, nullptr);
-            }
+            if(d >= degreeArray.size()) degreeArray.resize(d+1,nullptr); //allocate extra space if necessary
         }
-        
-        degreeTable[d] = x;
+        degreeArray[d] = p;
     }
-    
-    // Reconstruct root list and find new minimum
+   
+    //rebuild the rootlist, start by minNode
     minNode = nullptr;
-    for (auto node : degreeTable) {
-        if (node) {
-            if (!minNode) {
+    for(Node* node : degreeArray){
+        if(node){
+            if(!minNode){
                 minNode = node;
-                node->left = node;
-                node->right = node;
-            } else {
-                // Add to root list
-                node->left = minNode;
-                node->right = minNode->right;
-                minNode->right->left = node;
-                minNode->right = node;
-                
-                if (node->key < minNode->key) {
-                    minNode = node;
-                }
+                node -> right = node;
+                node -> left = node;
             }
+            else{insertBefore(node, minNode);}
+            if(node->key < minNode->key) minNode = node; // change minNode if necessary
+             
         }
     }
 }
 
-template<typename T>
-FibonacciNode<T>* FibonacciHeap<T>::extractMin() {
-    FibonacciNode<T>* z = minNode;
-    
-    if (z) {
-        // Add all children of z to root list
-        if (z->child) {
-            FibonacciNode<T>* child = z->child;
-            FibonacciNode<T>* start = child;
-            do {
-                FibonacciNode<T>* next = child->right;
-                
-                // Add child to root list
-                child->left = minNode;
-                child->right = minNode->right;
-                minNode->right->left = child;
-                minNode->right = child;
-                
-                child->parent = nullptr;
-                child = next;
-            } while (child != start);
-        }
-        
-        // Remove z from root list
-        z->left->right = z->right;
-        z->right->left = z->left;
-        
-        if (z == z->right) {
-            minNode = nullptr;
-        } else {
-            minNode = z->right;
-            consolidate();
-        }
-        
-        numNodes--;
+// extractMin
+// is it better if it returns both bool, node?
+template <typename T>
+typename FibonacciHeap<T>::Node* FibonacciHeap<T>::extractMin(){
+    Node* temp = minNode;
+    if(!temp) return temp;
+    if(temp->child){
+        Node* start = temp->child;
+        Node* curr = start;
+        do{
+            Node *newChild = curr->right;
+            curr->parent = nullptr;
+            insertBefore(curr, temp);
+            curr = newChild;
+        }while(curr != start);
     }
-    
-    return z;
+
+    // remove minNode from the rootlist    
+    temp->left->right = temp->right;
+    temp->right->left = temp->left;
+
+    if(temp->right == temp) minNode = nullptr;
+    else{
+        minNode = temp->right;
+        consolidate();
+    }
+
+    size--;
+    return temp;
 }
 
-template<typename T>
-void FibonacciHeap<T>::cut(FibonacciNode<T>* x, FibonacciNode<T>* y) {
-    // Remove x from child list of y
-    if (x->right == x) {
-        y->child = nullptr;
-    } else {
-        x->left->right = x->right;
-        x->right->left = x->left;
-        if (y->child == x) {
-            y->child = x->right;
-        }
-    }
-    
-    y->degree--;
-    
-    // Add x to root list
-    x->left = minNode;
-    x->right = minNode->right;
-    minNode->right->left = x;
-    minNode->right = x;
-    
-    x->parent = nullptr;
-    x->marked = false;
-}
-
-template<typename T>
-void FibonacciHeap<T>::cascadingCut(FibonacciNode<T>* y) {
-    FibonacciNode<T>* z = y->parent;
-    
-    if (z) {
-        if (!y->marked) {
-            y->marked = true;
-        } else {
-            cut(y, z);
-            cascadingCut(z);
-        }
-    }
-}
-
-template<typename T>
-void FibonacciHeap<T>::decreaseKey(FibonacciNode<T>* x, T newKey) {
-    if (newKey > x->key) {
-        throw std::invalid_argument("New key is greater than current key");
-    }
-    
-    x->key = newKey;
-    FibonacciNode<T>* y = x->parent;
-    
-    if (y && x->key < y->key) {
-        cut(x, y);
-        cascadingCut(y);
-    }
-    
-    if (x->key < minNode->key) {
-        minNode = x;
-    }
-}
-
-template<typename T>
-void FibonacciHeap<T>::deleteNode(FibonacciNode<T>* x) {
-    // Decrease key to minimum possible value
-    T minValue = std::numeric_limits<T>::lowest();
-    
-    // Temporarily set to minimum
-    x->key = minValue;
-    FibonacciNode<T>* y = x->parent;
-    
-    if (y) {
-        cut(x, y);
-        cascadingCut(y);
-    }
-    
-    minNode = x;
-    
-    // Extract the minimum (which is x)
-    FibonacciNode<T>* extracted = extractMin();
-    delete extracted;
-}
-
-template<typename T>
-void FibonacciHeap<T>::merge(FibonacciHeap<T>& other) {
-    if (!other.minNode) return;
-    
-    if (!minNode) {
-        minNode = other.minNode;
-    } else {
-        // Concatenate root lists
-        FibonacciNode<T>* thisRight = minNode->right;
-        FibonacciNode<T>* otherLeft = other.minNode->left;
-        
-        minNode->right = other.minNode;
-        other.minNode->left = minNode;
-        thisRight->left = otherLeft;
-        otherLeft->right = thisRight;
-        
-        // Update minimum
-        if (other.minNode->key < minNode->key) {
-            minNode = other.minNode;
-        }
-    }
-    
-    numNodes += other.numNodes;
-    
-    // Clear the other heap
-    other.minNode = nullptr;
-    other.numNodes = 0;
-}
-
-template<typename T>
-std::vector<FibonacciNode<T>*> FibonacciHeap<T>::getRootList() const {
-    std::vector<FibonacciNode<T>*> roots;
-    
+// getRootList: return all roots in the circular root list
+template <typename T>
+std::vector<typename FibonacciHeap<T>::Node*> FibonacciHeap<T>::getRootList() const {
+    std::vector<Node*> roots;
     if (!minNode) return roots;
-    
-    FibonacciNode<T>* current = minNode;
+    Node* curr = minNode;
+    Node* start = minNode;
     do {
-        roots.push_back(current);
-        current = current->right;
-    } while (current != minNode);
-    
+        roots.push_back(curr);
+        curr = curr->right;
+    } while (curr != start);
     return roots;
 }
 
-template<typename T>
-void FibonacciHeap<T>::traverse(FibonacciNode<T>* node, std::function<void(FibonacciNode<T>*)> callback) const {
-    if (!node) return;
-    
-    FibonacciNode<T>* current = node;
-    do {
-        callback(current);
-        if (current->child) {
-            traverse(current->child, callback);
-        }
-        current = current->right;
-    } while (current != node);
-}
-
-#endif // FIBONACCIHEAP_TPP
+#endif

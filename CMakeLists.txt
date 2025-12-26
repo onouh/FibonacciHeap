@@ -24,8 +24,7 @@ set(SOURCES
 
 # Header files
 set(HEADERS
-    include/FibonacciHeap.h
-    include/FibonacciHeap.tpp
+    include/FibonacciHeap.hpp
     include/MainWindow.h
 )
 
