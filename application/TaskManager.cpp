@@ -1,16 +1,19 @@
 #include "TaskManager.h"
+#include <algorithm>
 
-template <typename Urgency>
 void TaskManager::addPatient(const std::string& name, Urgency urgency) {
-    heap.insert(name, static_cast<int>(urgency));
+    auto* node = heap.insert(name, static_cast<int>(urgency));
+    tasks.push_back(Task(name, urgency, node));
 }
 
-template <typename Urgency>
 bool TaskManager::updatePatientStatus(const std::string& name, Urgency newLevel) {
-    auto* node = heap.search(name);
-    if (node) {
-        heap.updateKey(node, static_cast<int>(newLevel));
-        return true;
+    // Find task in our list
+    for (auto& task : tasks) {
+        if (task.name == name && task.heapNode) {
+            heap.decreaseKey(task.heapNode, static_cast<int>(newLevel));
+            task.urgency = newLevel;
+            return true;
+        }
     }
     return false;
 }
@@ -24,10 +27,35 @@ std::string TaskManager::treatNext() {
     if (heap.isEmpty()) return "";
     auto* min = heap.extractMin();
     std::string value = min->value;
+    
+    // Remove from tasks list
+    tasks.erase(
+        std::remove_if(tasks.begin(), tasks.end(),
+            [&value](const Task& t) { return t.name == value; }),
+        tasks.end()
+    );
+    
     delete min;
     return value;
 }
 
 int TaskManager::getPendingCount() {
     return heap.getSize();
+}
+
+std::vector<Task> TaskManager::getAllTasks() const {
+    return tasks;
+}
+
+void TaskManager::removeTask(const std::string& name) {
+    // Find and remove from tasks list
+    auto it = std::find_if(tasks.begin(), tasks.end(),
+        [&name](const Task& t) { return t.name == name; });
+    
+    if (it != tasks.end()) {
+        if (it->heapNode) {
+            heap.deleteNode(it->heapNode);
+        }
+        tasks.erase(it);
+    }
 }

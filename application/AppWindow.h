@@ -1,26 +1,29 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef APPWINDOW_H
+#define APPWINDOW_H
 
 #include <QMainWindow>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QTimer>
+#include <QScrollArea>
+#include <QComboBox>
+#include <QStatusBar>
 #include "TaskManager.h"
 
-namespace Ui {
-class MainWindow;
-}
-
-class MainWindow : public QMainWindow
+class AppWindow : public QMainWindow
 {
     Q_OBJECT
 
 private:
-    TaskManager taskManager;  // Updated with TaskManager integration
+    TaskManager taskManager;
+    QWidget* centralWidget;
+    QVBoxLayout* mainLayout;
     QVBoxLayout* taskListLayout;
+    QScrollArea* scrollArea;
     QLabel *timeLabel, *activeTasksLabel;
     QTimer* timer;
     int taskCounter;
@@ -30,18 +33,19 @@ private:
     void refreshTaskList();
     int getActiveTaskCount();
     QString urgencyToString(Urgency priority) const;
+    QColor urgencyToColor(Urgency priority) const;
 
 private slots:
     void addTask();
     void viewUrgent();
     void treatNext();
-    void completeTask(const QString& taskId);
-    void updateTaskPriority(const QString& taskId);
+    void completeTask(const QString& taskName);
+    void updateTaskPriority(const QString& taskName);
     void updateTime();
     void showNotification(const QString& message);
 
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
-    ~MainWindow();
+    explicit AppWindow(QWidget* parent = nullptr);
+    ~AppWindow();
 };
-#endif // MAINWINDOW_H
+#endif // APPWINDOW_H

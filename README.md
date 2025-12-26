@@ -1,6 +1,16 @@
-# Fibonacci Heap with Enhanced Interactive GUI
+# Fibonacci Heap with Two Interactive GUI Applications
 
-This repository contains a complete C++ implementation of a Fibonacci Heap data structure with a **fully interactive, animated GUI** for visualization.
+This repository contains a complete C++ implementation of a Fibonacci Heap data structure with **two fully functional GUI applications** for visualization and practical use.
+
+## 🎯 Two Complete Applications
+
+### 1. FibonacciHeapGUI - Interactive Visualization
+**Fully interactive, animated GUI** for visualizing Fibonacci Heap operations and understanding the algorithm.
+
+### 2. TaskManagerGUI - Emergency Care Management
+**Practical application** using the Fibonacci Heap for priority-based patient queue management in emergency care settings.
+
+> **See [RUNNING_BOTH_GUIS.md](RUNNING_BOTH_GUIS.md) for detailed instructions on running both applications.**
 
 ## ✨ Key Features
 
@@ -111,12 +121,19 @@ cd build
 # Configure with CMake
 cmake ..
 
-# Build the project
+# Build both applications
 make -j4
 
-# Run the application
+# Run the visualization GUI
 ./bin/FibonacciHeapGUI
+
+# Or run the task manager GUI
+./bin/TaskManagerGUI
 ```
+
+Both executables will be created in `build/bin/`:
+- **FibonacciHeapGUI** - Interactive visualization
+- **TaskManagerGUI** - Emergency care management
 
 ### Testing the Enhanced Features
 
@@ -210,6 +227,13 @@ This project is part of a Data Structures Course final project.
 
 ## Screenshots
 
-![Fibonacci Heap GUI](https://github.com/user-attachments/assets/4d61005d-5060-4418-a49c-2df242a8259a)
+### FibonacciHeapGUI - Interactive Visualization
+![Fibonacci Heap GUI](https://github.com/user-attachments/assets/38915855-76d1-40fc-ae8c-50c442d6bddd)
 
-*The GUI showing the initial state with controls for inserting values, extracting minimum, and resetting the heap.* 
+*The visualization GUI showing the heap structure with interactive controls for all operations, animation controls, and real-time visual feedback.*
+
+### TaskManagerGUI - Emergency Care Management
+![Task Manager GUI](https://github.com/user-attachments/assets/b53e3352-3375-47e5-b4a3-c0249f6064bb)
+
+*The emergency care management application showing priority-based patient queue with color-coded urgency levels and action buttons.*
+ 
