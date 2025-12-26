@@ -239,5 +239,5 @@ This project is part of a Data Structures Course final project.
 
 Helpful Source:
   
-    [Fibonacci Heap](https://www.youtube.com/watch?v=6JxvKfSV9Ns&list=PPSV)
+  [Fibonacci Heap](https://www.youtube.com/watch?v=6JxvKfSV9Ns&list=PPSV)
  
