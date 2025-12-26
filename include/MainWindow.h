@@ -19,15 +19,7 @@ class HeapCanvas : public QWidget {
     
 private:
     FibonacciHeap<int>* heap;
-    std::map<FibonacciNode<int>*, QPointF> nodePositions;
-    // Input state
-    std::string inputValue;
-    bool isTyping;
-    sf::RectangleShape inputBox;
-    sf::Text inputText;
-    
-    // Node positions for visualization (keyed by heap Node*)
-    std::map<FibonacciHeap<int>::Node*, sf::Vector2f> nodePositions;
+    std::map<FibonacciHeap<int>::Node*, QPointF> nodePositions;
     
     // Constants
     static constexpr float NODE_RADIUS = 25.0f;
@@ -35,8 +27,8 @@ private:
     static constexpr float VERTICAL_SPACING = 80.0f;
     
     void calculateNodePositions();
-    void positionSubtree(FibonacciNode<int>* node, float x, float y, float& maxX);
-    void drawNode(QPainter& painter, FibonacciNode<int>* node, float x, float y, bool isRoot);
+    void positionSubtree(FibonacciHeap<int>::Node* node, float x, float y, float& maxX);
+    void drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, float x, float y, bool isRoot);
     void drawConnections(QPainter& painter);
     
 protected:

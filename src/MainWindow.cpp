@@ -61,7 +61,7 @@ void HeapCanvas::calculateNodePositions() {
     
     if (heap->isEmpty()) return;
     
-    std::vector<FibonacciNode<int>*> roots = heap->getRootList();
+    std::vector<FibonacciHeap<int>::Node*> roots = heap->getRootList();
     
     float startX = 100;
     float startY = 100;
@@ -74,7 +74,7 @@ void HeapCanvas::calculateNodePositions() {
     }
 }
 
-void HeapCanvas::positionSubtree(FibonacciNode<int>* node, float x, float y, float& maxX) {
+void HeapCanvas::positionSubtree(FibonacciHeap<int>::Node* node, float x, float y, float& maxX) {
     if (!node) return;
     
     nodePositions[node] = QPointF(x, y);
@@ -82,8 +82,8 @@ void HeapCanvas::positionSubtree(FibonacciNode<int>* node, float x, float y, flo
     
     // Position children
     if (node->child) {
-        FibonacciNode<int>* child = node->child;
-        FibonacciNode<int>* start = child;
+        FibonacciHeap<int>::Node* child = node->child;
+        FibonacciHeap<int>::Node* start = child;
         float childX = x - (node->degree - 1) * HORIZONTAL_SPACING / 2.0f;
         
         do {
@@ -115,10 +115,10 @@ void HeapCanvas::drawConnections(QPainter& painter) {
     }
 }
 
-void HeapCanvas::drawNode(QPainter& painter, FibonacciNode<int>* node, float x, float y, bool isRoot) {
+void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, float x, float y, bool isRoot) {
     // Determine node color
     QColor fillColor;
-    if (node == heap->getMinNode()) {
+    if (node == heap->getMin()) {
         fillColor = QColor(255, 215, 0); // Gold for minimum
     } else if (node->marked) {
         fillColor = QColor(255, 140, 0); // Orange for marked
@@ -235,7 +235,7 @@ void MainWindow::onInsertClicked() {
         return;
     }
     
-    heap.insert(value);
+    heap.insert(value, value);  // Use value as both the value and key
     updateStatus(QString("Inserted: %1").arg(value));
     inputField->clear();
     canvas->update();
@@ -248,8 +248,8 @@ void MainWindow::onExtractMinClicked() {
     }
     
     try {
-        int minValue = heap.getMin();
-        FibonacciNode<int>* extracted = heap.extractMin();
+        int minValue = heap.getMin()->key;  // Get key from the min node
+        FibonacciHeap<int>::Node* extracted = heap.extractMin();
         delete extracted;  // Free the extracted node
         updateStatus(QString("Extracted min: %1").arg(minValue));
         canvas->update();
