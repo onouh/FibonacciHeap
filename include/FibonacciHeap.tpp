@@ -209,5 +209,18 @@ typename FibonacciHeap<T>::Node* FibonacciHeap<T>::extractMin(){
     return temp;
 }
 
+// getRootList: return all roots in the circular root list
+template <typename T>
+std::vector<typename FibonacciHeap<T>::Node*> FibonacciHeap<T>::getRootList() const {
+    std::vector<Node*> roots;
+    if (!minNode) return roots;
+    Node* curr = minNode;
+    Node* start = minNode;
+    do {
+        roots.push_back(curr);
+        curr = curr->right;
+    } while (curr != start);
+    return roots;
+}
 
 #endif

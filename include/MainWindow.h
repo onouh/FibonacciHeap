@@ -33,8 +33,8 @@ private:
     sf::RectangleShape inputBox;
     sf::Text inputText;
     
-    // Node positions for visualization
-    std::map<FibonacciHeap<int>*, sf::Vector2f> nodePositions;
+    // Node positions for visualization (keyed by heap Node*)
+    std::map<FibonacciHeap<int>::Node*, sf::Vector2f> nodePositions;
     
     // Constants
     static constexpr float NODE_RADIUS = 25.0f;
@@ -52,9 +52,9 @@ private:
     void handleTextInput(sf::Uint32 unicode);
     void render();
     void drawHeap();
-    void drawNode(FibonacciHeap<int>* node, float x, float y, bool isRoot = false);
+    void drawNode(FibonacciHeap<int>::Node* node, float x, float y, bool isRoot = false);
     void calculateNodePositions();
-    void positionSubtree(FibonacciHeap<int>* node, float x, float y, float& maxX);
+    void positionSubtree(FibonacciHeap<int>::Node* node, float x, float y, float& maxX);
     bool isButtonClicked(const sf::RectangleShape& button, const sf::Vector2f& mousePos);
     void insertValue();
     void extractMinValue();

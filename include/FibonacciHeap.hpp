@@ -9,7 +9,7 @@ using namespace std;
 template <typename T>
 class FibonacciHeap {
 // nested Node class    
-private:
+public:
 
     class Node {
         public:
@@ -48,6 +48,7 @@ public:
     void linkNodes(Node*a, Node*b);
     void consolidate();
     Node* extractMin();
+    std::vector<Node*> getRootList() const;
  
 };
 

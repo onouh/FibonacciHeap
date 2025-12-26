@@ -321,7 +321,7 @@ void MainWindow::calculateNodePositions() {
     
     if (heap.isEmpty()) return;
     
-    std::vector<FibonacciNode<int>*> roots = heap.getRootList();
+    std::vector<FibonacciHeap<int>::Node*> roots = heap.getRootList();
     
     float startX = 100;
     float startY = 250;
@@ -334,7 +334,7 @@ void MainWindow::calculateNodePositions() {
     }
 }
 
-void MainWindow::positionSubtree(FibonacciNode<int>* node, float x, float y, float& maxX) {
+void MainWindow::positionSubtree(FibonacciHeap<int>::Node* node, float x, float y, float& maxX) {
     if (!node) return;
     
     nodePositions[node] = sf::Vector2f(x, y);
@@ -342,8 +342,8 @@ void MainWindow::positionSubtree(FibonacciNode<int>* node, float x, float y, flo
     
     // Position children
     if (node->child) {
-        FibonacciNode<int>* child = node->child;
-        FibonacciNode<int>* start = child;
+        FibonacciHeap<int>::Node* child = node->child;
+        FibonacciHeap<int>::Node* start = child;
         float childX = x - (node->degree - 1) * HORIZONTAL_SPACING / 2.0f;
         
         do {
