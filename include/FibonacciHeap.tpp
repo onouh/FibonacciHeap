@@ -1,7 +1,7 @@
-#include "FibonacciHeap.hpp"
 #ifndef FIBONACCI_HEAP_TPP
 #define FIBONACCI_HEAP_TPP
 
+#include "FibonacciHeap.hpp"
 #include <iostream>
 #include <vector>
 #include <cmath>
