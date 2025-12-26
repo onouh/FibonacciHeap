@@ -10,8 +10,22 @@ bool TaskManager::updatePatientStatus(const std::string& name, Urgency newLevel)
     // Find task in our list
     for (auto& task : tasks) {
         if (task.name == name && task.heapNode) {
-            heap.decreaseKey(task.heapNode, static_cast<int>(newLevel));
-            task.urgency = newLevel;
+            int newPriority = static_cast<int>(newLevel);
+            int currentPriority = static_cast<int>(task.urgency);
+            
+            // Only use decreaseKey if new priority is better (lower number = higher priority)
+            if (newPriority < currentPriority) {
+                heap.decreaseKey(task.heapNode, newPriority);
+                task.urgency = newLevel;
+                return true;
+            } else if (newPriority > currentPriority) {
+                // For increasing priority (lower urgency), we need to delete and re-insert
+                heap.deleteNode(task.heapNode);
+                task.heapNode = heap.insert(name, newPriority);
+                task.urgency = newLevel;
+                return true;
+            }
+            // If same priority, no change needed
             return true;
         }
     }
@@ -28,7 +42,9 @@ std::string TaskManager::treatNext() {
     auto* min = heap.extractMin();
     std::string value = min->value;
     
-    // Remove from tasks list
+    // Remove from tasks list - O(n) operation
+    // Note: Using vector for simplicity. For larger datasets, consider using 
+    // std::unordered_map<std::string, Task*> for O(1) lookup and removal
     tasks.erase(
         std::remove_if(tasks.begin(), tasks.end(),
             [&value](const Task& t) { return t.name == value; }),

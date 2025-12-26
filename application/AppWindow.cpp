@@ -122,7 +122,9 @@ void AppWindow::refreshTaskList() {
         emptyLabel->setStyleSheet("color: #95a5a6; font-size: 14px; padding: 20px;");
         taskListLayout->addWidget(emptyLabel);
     } else {
-        // Sort tasks by urgency (priority)
+        // Sort tasks by urgency for display purposes
+        // Note: The heap internally maintains priority; this sorting is only for UI presentation
+        // to show patients grouped by urgency level for better readability
         std::sort(tasks.begin(), tasks.end(),
             [](const Task& a, const Task& b) {
                 return static_cast<int>(a.urgency) < static_cast<int>(b.urgency);
