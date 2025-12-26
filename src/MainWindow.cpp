@@ -132,8 +132,8 @@ void HeapCanvas::drawConnections(QPainter& painter) {
 }
 
 void HeapCanvas::drawPointerLines(QPainter& painter) {
-    // Remove dashed sibling lines for simpler visualization
-    // This makes the graph cleaner and less cluttered
+    // Intentionally empty - sibling lines removed for simpler visualization
+    // This function is kept for potential future use and API compatibility
 }
 
 void HeapCanvas::drawNode(QPainter& painter, FibonacciHeap<int>::Node* node, float x, float y, bool isRoot) {
