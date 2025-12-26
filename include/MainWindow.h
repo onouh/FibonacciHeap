@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <map>
-#include "FibonacciHeap.h"
+#include "FibonacciHeap.hpp"
 
 /**
  * Main window class for Fibonacci Heap visualization
@@ -34,7 +34,7 @@ private:
     sf::Text inputText;
     
     // Node positions for visualization
-    std::map<FibonacciNode<int>*, sf::Vector2f> nodePositions;
+    std::map<FibonacciHeap<int>*, sf::Vector2f> nodePositions;
     
     // Constants
     static constexpr float NODE_RADIUS = 25.0f;
@@ -52,9 +52,9 @@ private:
     void handleTextInput(sf::Uint32 unicode);
     void render();
     void drawHeap();
-    void drawNode(FibonacciNode<int>* node, float x, float y, bool isRoot = false);
+    void drawNode(FibonacciHeap<int>* node, float x, float y, bool isRoot = false);
     void calculateNodePositions();
-    void positionSubtree(FibonacciNode<int>* node, float x, float y, float& maxX);
+    void positionSubtree(FibonacciHeap<int>* node, float x, float y, float& maxX);
     bool isButtonClicked(const sf::RectangleShape& button, const sf::Vector2f& mousePos);
     void insertValue();
     void extractMinValue();

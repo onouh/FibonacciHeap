@@ -1,45 +1,37 @@
-#include "MainWindow.h"
+#include <vector>
+#include <string>
 #include <iostream>
 #include <cmath>
 #include <sstream>
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
+
+#include "MainWindow.h"
+
+// Define constants for UI dimensions
+constexpr float INPUT_BOX_WIDTH = 200.0f;
+constexpr float INPUT_BOX_HEIGHT = 30.0f;
+constexpr float BUTTON_WIDTH = 120.0f;
+constexpr float BUTTON_HEIGHT = 40.0f;
 
 MainWindow::MainWindow() : 
     window(sf::VideoMode(1200, 800), "Fibonacci Heap Visualization"),
     isTyping(false) {
-    
-    // Try to load font from multiple locations for cross-platform compatibility
-    std::vector<std::string> fontPaths = {
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",           // Linux
-        "/usr/share/fonts/TTF/DejaVuSans.ttf",                       // Linux alternative
-        "C:\\Windows\\Fonts\\Arial.ttf",                              // Windows
-        "/System/Library/Fonts/Helvetica.ttc",                       // macOS
-        "/Library/Fonts/Arial.ttf",                                  // macOS alternative
-        "DejaVuSans.ttf"                                             // Local bundled font
-    };
-    
-    bool fontLoaded = false;
-    for (const auto& path : fontPaths) {
-        if (font.loadFromFile(path)) {
-            fontLoaded = true;
-            break;
-        }
-    }
-    
-    if (!fontLoaded) {
-        std::cerr << "Warning: Could not load any font. Text may not display properly." << std::endl;
-    }
-    
-    initializeUI();
-}
 
-void MainWindow::initializeUI() {
-    // Title
+    // Initialize font
+    if (!font.loadFromFile("/System/Library/Fonts/Helvetica.ttc")) {
+        std::cerr << "Error: Could not load font." << std::endl;
+    }
+
+    // Initialize title text
     titleText.setFont(font);
     titleText.setString("Fibonacci Heap Visualization");
     titleText.setCharacterSize(28);
     titleText.setFillColor(sf::Color::Black);
     titleText.setPosition(20, 10);
-    
+}
+
+void MainWindow::initializeUI() {
     // Instructions
     instructionsText.setFont(font);
     instructionsText.setString("Enter a number and click Insert. Click Extract Min to remove minimum.");
@@ -185,7 +177,7 @@ void MainWindow::insertValue() {
     
     try {
         int value = std::stoi(inputValue);
-        heap.insert(value);
+        heap.insert(value, value);
         updateStatus("Inserted: " + inputValue);
         inputValue.clear();
         inputText.setString("");
@@ -202,8 +194,9 @@ void MainWindow::extractMinValue() {
     }
     
     try {
-        int minValue = heap.getMin();
-        FibonacciNode<int>* extracted = heap.extractMin();
+        FibonacciHeap<int>::Node* minNode = heap.getMin();
+        int minValue = minNode->key;
+        FibonacciHeap<int>::Node* extracted = heap.extractMin();
         delete extracted;  // Free the extracted node
         updateStatus("Extracted min: " + std::to_string(minValue));
     }
@@ -267,9 +260,10 @@ void MainWindow::drawHeap() {
     for (const auto& [node, pos] : nodePositions) {
         if (node->child) {
             // Draw lines to children
-            FibonacciNode<int>* child = node->child;
-            FibonacciNode<int>* start = child;
+            FibonacciHeap<int>::Node* child = node->child;
+            FibonacciHeap<int>::Node* start = child;
             do {
+                FibonacciHeap<int>::Node* next = child->right;
                 if (nodePositions.find(child) != nodePositions.end()) {
                     sf::Vector2f childPos = nodePositions[child];
                     sf::Vertex line[] = {
@@ -278,7 +272,7 @@ void MainWindow::drawHeap() {
                     };
                     window.draw(line, 2, sf::Lines);
                 }
-                child = child->right;
+                child = next;
             } while (child != start);
         }
     }
@@ -289,13 +283,13 @@ void MainWindow::drawHeap() {
     }
 }
 
-void MainWindow::drawNode(FibonacciNode<int>* node, float x, float y, bool isRoot) {
+void MainWindow::drawNode(FibonacciHeap<int>::Node* node, float x, float y, bool isRoot) {
     // Draw circle
     sf::CircleShape circle(NODE_RADIUS);
     circle.setPosition(x - NODE_RADIUS, y - NODE_RADIUS);
     
     // Color based on node properties
-    if (node == heap.getMinNode()) {
+    if (node == heap.getMin()) {
         circle.setFillColor(sf::Color(255, 215, 0)); // Gold for minimum
     } else if (node->marked) {
         circle.setFillColor(sf::Color(255, 140, 0)); // Orange for marked

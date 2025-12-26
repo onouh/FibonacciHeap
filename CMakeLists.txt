@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find SFML
-find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+find_package(SFML 2.6 COMPONENTS graphics window system REQUIRED)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -19,8 +19,7 @@ set(SOURCES
 
 # Header files
 set(HEADERS
-    include/FibonacciHeap.h
-    include/FibonacciHeap.tpp
+    include/FibonacciHeap.hpp
     include/MainWindow.h
 )
 
