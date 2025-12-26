@@ -2,7 +2,7 @@
 #define FIBONACCI_HEAP_HPP
 
 #include <iostream>
-#include <vector>
+#include "Vector.hpp"
 #include <cmath>
 using namespace std;
 
@@ -33,6 +33,7 @@ private:
 
     void insertBefore(Node* node, Node* target);
     void deleteAll(Node* start);
+    Node* findNode(Node* start, const T& value);
 
 public:
 
@@ -46,13 +47,16 @@ public:
     void displayMin() const;
     void cut(Node* x, Node* y);
     void cascadingCut(Node* y);
-    void decreaseKey(Node* x, T newKey);
+    void decreaseKey(Node* x, int newKey);
     void merge(FibonacciHeap& otherHeap);
     void linkNodes(Node*a, Node*b);
     void consolidate();
     Node* extractMin();
-    std::vector<Node*> getRootList() const;
- 
+    Vector<Node*> getRootList() const;
+    void deleteNode(Node* x);             
+    Node* search(const T& value);
+    void increaseKey(Node* x, int newKey);
+    void updateKey(Node* x, int newKey);
 };
 
 #include "FibonacciHeap.tpp"
