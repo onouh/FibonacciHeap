@@ -1,5 +1,4 @@
 #include "MainWindow.h"
-#include "TypeSelector.h"
 #include <QApplication>
 #include <iostream>
 
@@ -7,37 +6,11 @@ int main(int argc, char *argv[]) {
     try {
         QApplication app(argc, argv);
         
-        // Show type selector dialog
-        TypeSelector typeSelector;
-        if (typeSelector.exec() == QDialog::Rejected) {
-            return 0;  // User cancelled
-        }
+        // Create main window for integer type
+        MainWindow window;
+        window.show();
         
-        DataType selectedType = typeSelector.getSelectedType();
-        
-        // Create main window based on selected type
-        QMainWindow* window = nullptr;
-        
-        switch (selectedType) {
-            case DataType::INTEGER:
-                window = new MainWindow<int>(selectedType);
-                break;
-            case DataType::CHAR:
-                window = new MainWindow<char>(selectedType);
-                break;
-            case DataType::STRING:
-                window = new MainWindow<std::string>(selectedType);
-                break;
-        }
-        
-        if (window) {
-            window->show();
-            int result = app.exec();
-            delete window;
-            return result;
-        }
-        
-        return 0;
+        return app.exec();
     }
     catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

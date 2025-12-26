@@ -19,6 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Source files
 set(SOURCES
     src/main.cpp
+    src/MainWindow.cpp
     src/AnimationSystem.cpp
     src/TypeSelector.cpp
 )
@@ -27,7 +28,6 @@ set(SOURCES
 set(HEADERS
     include/FibonacciHeap.hpp
     include/MainWindow.h
-    include/MainWindow.tpp
     include/AnimationSystem.h
     include/TypeSelector.h
     include/HeapInterface.h
