@@ -250,7 +250,7 @@ void FibonacciHeap<T>::cut(FibonacciHeap<T>::Node* x, FibonacciHeap<T>::Node* y)
 
 template<typename T>
 void FibonacciHeap<T>::cascadingCut(FibonacciHeap<T>::Node* y) {
-    FibonacciNode<T>* z = y->parent;
+    FibonacciHeap<T>::Node* z = y->parent;
     
     if (z) {
         if (!y->marked) {
@@ -269,7 +269,7 @@ void FibonacciHeap<T>::decreaseKey(FibonacciHeap<T>::Node* x, T newKey) {
     }
     
     x->key = newKey;
-    FibonacciNode<T>* y = x->parent;
+    FibonacciHeap<T>::Node* y = x->parent;
     
     if (y && x->key < y->key) {
         cut(x, y);
