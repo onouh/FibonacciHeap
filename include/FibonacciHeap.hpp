@@ -53,4 +53,4 @@ public:
 
 #include "FibonacciHeap.tpp"
 
-#endif
+#endif // FIBONACCI_HEAP_HPP
