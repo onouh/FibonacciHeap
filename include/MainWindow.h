@@ -29,11 +29,11 @@ private:
     FibonacciHeap<int>::Node* selectedNode;
     FibonacciHeap<int>::Node* highlightedNode;
     
-    // Constants
+    // Constants - Increased spacing to prevent node overlap
     static constexpr float NODE_RADIUS = 30.0f;
-    static constexpr float HORIZONTAL_SPACING = 120.0f;
-    static constexpr float VERTICAL_SPACING = 100.0f;
-    static constexpr float SIBLING_SPACING = 80.0f;
+    static constexpr float HORIZONTAL_SPACING = 150.0f;
+    static constexpr float VERTICAL_SPACING = 120.0f;
+    static constexpr float SIBLING_SPACING = 100.0f;
     
     void calculateNodePositions();
     void positionSubtree(FibonacciHeap<int>::Node* node, float x, float y, float& maxX, int depth = 0);
