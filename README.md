@@ -228,12 +228,16 @@ This project is part of a Data Structures Course final project.
 ## Screenshots
 
 ### FibonacciHeapGUI - Interactive Visualization
+![WhatsApp Image 2026-01-27 at 10 30 07 AM](https://github.com/user-attachments/assets/418605fd-a57c-4b32-abf6-1799de829a8f)
+
 ![Fibonacci Heap GUI](https://github.com/user-attachments/assets/38915855-76d1-40fc-ae8c-50c442d6bddd)
 
 *The visualization GUI showing the heap structure with interactive controls for all operations, animation controls, and real-time visual feedback.*
 
 ### TaskManagerGUI - Emergency Care Management
-![Task Manager GUI](https://github.com/user-attachments/assets/b53e3352-3375-47e5-b4a3-c0249f6064bb)
+![WhatsApp Image 2026-01-27 at 10 29 37 AM](https://github.com/user-attachments/assets/3049fc0d-db7f-44ab-ac53-34bada8239f3)
+
+![WhatsApp Image 2026-01-27 at 10 29 20 AM](https://github.com/user-attachments/assets/f9a7fdda-f192-4cd8-8c35-35450209a095)
 
 *The emergency care management application showing priority-based patient queue with color-coded urgency levels and
 
