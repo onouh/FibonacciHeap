@@ -1,6 +1,12 @@
 # Fibonacci Heap with Two Interactive GUI Applications
 
+[![Qt Build Status](https://img.shields.io/badge/Qt-Verified-brightgreen)](VERIFY_QT_BUILD.md)
+[![Build System](https://img.shields.io/badge/Build-CMake-blue)](CMakeLists.txt)
+[![C++ Standard](https://img.shields.io/badge/C++-17-orange)](https://isocpp.org/)
+
 This repository contains a complete C++ implementation of a Fibonacci Heap data structure with **two fully functional GUI applications** for visualization and practical use.
+
+> ✅ **VERIFIED**: This code is fully runnable in Qt. See [VERIFY_QT_BUILD.md](VERIFY_QT_BUILD.md) for verification details.
 
 ## 🎯 Two Complete Applications
 
@@ -101,6 +107,23 @@ FibonacciHeap/
 - **CMake** 3.16 or newer
 - **Qt 6** (Widgets module)
 - **g++** or compatible C++ compiler
+
+## Quick Verification
+
+To quickly verify that this code is runnable in Qt on your system:
+
+```bash
+./verify_qt_build.sh
+```
+
+This script will:
+- ✓ Check for required build tools
+- ✓ Verify Qt6 installation
+- ✓ Build both applications
+- ✓ Confirm Qt library linkage
+- ✓ Report build success
+
+For detailed verification results, see [VERIFY_QT_BUILD.md](VERIFY_QT_BUILD.md).
 
 ## Building the Project
 
